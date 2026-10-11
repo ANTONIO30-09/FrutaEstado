@@ -24,7 +24,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] `PROGRESS.md` (este archivo)
 - [x] `requirements.txt` con dependencias base
 - [x] `docs/decisiones.md` con justificación HSV vs YOLO/CNN
-- [ ] Rama `dev` creada y `main` protegida en GitHub
+- [x] Rama `dev` creada y `main` protegida en GitHub
 
 ---
 
