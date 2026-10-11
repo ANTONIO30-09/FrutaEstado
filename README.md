@@ -161,6 +161,10 @@ El clasificador soporta umbrales HSV especificos por fruta. El perfil activo se 
 
 Los campos no especificados toman los valores del contrato original. El perfil queda disponible en `.env` con `PERFIL_FRUTA=pera`.
 
+**Origen de los valores:**
+
+Los perfiles built-in (en `src/perfiles_frutas.py`) son puntos de partida teoricos. Los perfiles de `config/perfiles_custom.json` fueron calibrados a partir de tablas HSV publicas para: platano, mandarina, manzana verde, manzana roja, uva verde, uva morada. Se recomienda recalibrar con las frutas y la iluminacion reales del entorno de la demo.
+
 **Cambiar de perfil sin reiniciar el dashboard:**
 
 ~~~bash

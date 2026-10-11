@@ -74,11 +74,13 @@ def clasificar_frame(
     if total_fruta == 0:
         return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0, perfil.nombre)
 
-    # Madura primero (condicion mas restrictiva)
-    es_madura = (
-        ((h <= perfil.h_madura_max_bajo) | (h >= perfil.h_madura_min_alto))
-        & (v >= perfil.v_madura_min)
-        & (s >= perfil.s_madura_min)
+    # Orden: pasada -> verde -> madura.
+    # Razon: en algunos perfiles (platano, mandarina) el H bajo puede ser
+    # marron (pasada) o amarillo (madura). Hay que excluir pasada primero
+    # para que un platano marron oscuro no caiga en "madura".
+    es_pasada = (
+        (h <= perfil.h_pasada_max)
+        & (v < perfil.v_pasada_max)
         & mascara_fruta
     )
 
@@ -86,14 +88,15 @@ def clasificar_frame(
         (h >= perfil.h_verde_min)
         & (h <= perfil.h_verde_max)
         & mascara_fruta
-        & ~es_madura
+        & ~es_pasada
     )
 
-    es_pasada = (
-        (h <= perfil.h_pasada_max)
-        & (v < perfil.v_pasada_max)
+    es_madura = (
+        ((h <= perfil.h_madura_max_bajo) | (h >= perfil.h_madura_min_alto))
+        & (v >= perfil.v_madura_min)
+        & (s >= perfil.s_madura_min)
         & mascara_fruta
-        & ~es_madura
+        & ~es_pasada
         & ~es_verde
     )
 

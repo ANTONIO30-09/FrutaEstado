@@ -1,1 +1,74 @@
-{}
+{
+  "platano": {
+    "h_verde_min": 26,
+    "h_verde_max": 55,
+    "h_madura_max_bajo": 25,
+    "h_madura_min_alto": 100,
+    "h_pasada_max": 17,
+    "v_pasada_max": 150,
+    "s_min_fruta": 40,
+    "v_min_fruta": 40,
+    "s_madura_min": 50,
+    "v_madura_min": 80
+  },
+  "mandarina": {
+    "h_verde_min": 25,
+    "h_verde_max": 45,
+    "h_madura_max_bajo": 24,
+    "h_madura_min_alto": 100,
+    "h_pasada_max": 10,
+    "v_pasada_max": 100,
+    "s_min_fruta": 40,
+    "v_min_fruta": 50,
+    "s_madura_min": 50,
+    "v_madura_min": 50
+  },
+  "manzana_verde": {
+    "h_verde_min": 36,
+    "h_verde_max": 85,
+    "h_madura_max_bajo": 35,
+    "h_madura_min_alto": 100,
+    "h_pasada_max": 25,
+    "v_pasada_max": 100,
+    "s_min_fruta": 40,
+    "v_min_fruta": 50,
+    "s_madura_min": 40,
+    "v_madura_min": 60
+  },
+  "manzana_roja": {
+    "h_verde_min": 36,
+    "h_verde_max": 85,
+    "h_madura_max_bajo": 10,
+    "h_madura_min_alto": 170,
+    "h_pasada_max": 20,
+    "v_pasada_max": 100,
+    "s_min_fruta": 40,
+    "v_min_fruta": 50,
+    "s_madura_min": 70,
+    "v_madura_min": 50
+  },
+  "uva_verde": {
+    "h_verde_min": 46,
+    "h_verde_max": 85,
+    "h_madura_max_bajo": 45,
+    "h_madura_min_alto": 100,
+    "h_pasada_max": 20,
+    "v_pasada_max": 100,
+    "s_min_fruta": 40,
+    "v_min_fruta": 50,
+    "s_madura_min": 40,
+    "v_madura_min": 60
+  },
+  "uva_morada": {
+    "h_verde_min": 35,
+    "h_verde_max": 85,
+    "h_madura_max_bajo": 10,
+    "h_madura_min_alto": 110,
+    "h_pasada_max": 20,
+    "v_pasada_max": 100,
+    "s_min_fruta": 40,
+    "v_min_fruta": 40,
+    "s_madura_min": 40,
+    "v_madura_min": 50
+  }
+}
