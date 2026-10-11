@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrutaEstado — Dashboard</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>FrutaEstado</h1>
+      <div class="subtitulo">Clasificador de madurez en tiempo real</div>
+    </div>
+    <div id="estado-conexion">Consultando…</div>
+  </header>
+
+  <section class="contadores">
+    <div class="contador s"><div class="num" id="contador-s">0</div><div class="lbl">Madura (S)</div></div>
+    <div class="contador a"><div class="num" id="contador-a">0</div><div class="lbl">Inmadura (A)</div></div>
+    <div class="contador r"><div class="num" id="contador-r">0</div><div class="lbl">Pasada (R)</div></div>
+    <div class="contador t"><div class="num" id="contador-total">0</div><div class="lbl">Total</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="panel">
+      <h2>Conteos por estado</h2>
+      <div class="chart-wrap"><canvas id="chart-conteos"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Registros por minuto (última hora)</h2>
+      <div class="chart-wrap"><canvas id="chart-serie"></canvas></div>
+    </div>
+  </section>
+
+  <section class="tabla-wrap">
+    <h2 style="margin:0 0 0.75rem 0;font-size:1rem;color:#cbd5e1;font-weight:500;">
+      Últimos 10 registros
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Estado</th>
+          <th>% Verde</th>
+          <th>% Madura</th>
+          <th>% Pasada</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-ultimos">
+        <tr><td colspan="5" style="text-align:center;color:#64748b;">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>MMI-611 — Ingeniería de Sistemas</footer>
+
+  <script src="/static/js/chart.umd.min.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

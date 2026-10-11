@@ -116,6 +116,70 @@ Esto abre la ventana con la ROI, el estado clasificado en vivo, los porcentajes 
 - Si el ESP32 no responde (apagado, timeout, IP mal configurada), el script **no se cae**: muestra `ESP32: FAIL` en pantalla y sigue clasificando.
 - Si el estado filtrado es `None` (no hay fruta en la ROI), no se envía nada al ESP32 hasta que aparezca una fruta.
 
+### Base de datos (Semana 3)
+
+El dashboard (Semana 3) usa SQLite local. La base de datos se crea automáticamente al arrancar el dashboard en la ruta definida por `DB_PATH` en `.env` (por defecto `data/frutas.db`). Esa ruta está en `.gitignore` — la base **no se sube al repositorio**.
+
+Esquema de la tabla `registros`:
+
+| Columna | Tipo | Notas |
+|---------|------|-------|
+| `id` | INTEGER | PK autoincremental |
+| `estado` | TEXT | CHECK en ('S', 'A', 'R') |
+| `pct_verde` | REAL | Porcentaje de píxeles verdes en la ROI |
+| `pct_madura` | REAL | Porcentaje de píxeles maduros |
+| `pct_pasada` | REAL | Porcentaje de píxeles pasados |
+| `timestamp` | TEXT | ISO en hora local |
+
+### Arrancar el dashboard
+
+~~~bash
+python run.py
+~~~
+
+Abre `http://localhost:5000/` en el navegador. La primera vez crea automáticamente la base `data/frutas.db` (ignorada por git) y sirve un placeholder que consulta `/api/resumen`.
+
+**Endpoints de la API:**
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET  | `/`             | Página del dashboard (placeholder hasta S3.4) |
+| POST | `/api/registro` | Inserta una fila. Body: `{estado, pct_verde, pct_madura, pct_pasada}` |
+| GET  | `/api/resumen`  | Devuelve `{conteos, serie_por_minuto, ultimos}` |
+
+### Ejecutar el pipeline completo con dashboard
+
+Para que `src/main.py` registre los cambios de estado en la base de datos, el dashboard debe estar corriendo en otra terminal:
+
+~~~bash
+# Terminal 1: dashboard
+python run.py
+
+# Terminal 2: pipeline de visión
+python -m src.main
+~~~
+
+Cuando la fruta cambia de estado (por ejemplo, de inmadura a madura), `src/main.py` hace `POST /api/registro` con el estado y los porcentajes. La ventana del pipeline muestra los contadores `DASH: OK:X FAIL:Y` — si el dashboard no está corriendo, verás `FAIL` subir pero el pipeline sigue funcionando sin caerse.
+
+### Panel visual (Chart.js)
+
+El dashboard se compone de cuatro bloques:
+
+1. **Contadores grandes** — totales por estado (S/A/R) y total general.
+2. **Doughnut** — distribución de registros por estado.
+3. **Línea temporal** — registros agrupados por minuto durante la última hora.
+4. **Tabla** — últimos 10 registros con hora, estado y porcentajes.
+
+Se actualiza automáticamente cada **6 segundos** consultando `GET /api/resumen` (sin recargar la página). Chart.js se incluye localmente en `dashboard/static/js/chart.umd.min.js`, sin depender de CDN.
+
+**Abrir el dashboard desde el celular** (misma red WiFi que la laptop):
+
+~~~
+http://<IP-DE-LA-LAPTOP>:5000/
+~~~
+
+La IP la puedes ver con `hostname -I` o `ip a`.
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
