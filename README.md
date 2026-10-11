@@ -147,6 +147,20 @@ Abre `http://localhost:5000/` en el navegador. La primera vez crea automáticame
 | POST | `/api/registro` | Inserta una fila. Body: `{estado, pct_verde, pct_madura, pct_pasada}` |
 | GET  | `/api/resumen`  | Devuelve `{conteos, serie_por_minuto, ultimos}` |
 
+### Ejecutar el pipeline completo con dashboard
+
+Para que `src/main.py` registre los cambios de estado en la base de datos, el dashboard debe estar corriendo en otra terminal:
+
+~~~bash
+# Terminal 1: dashboard
+python run.py
+
+# Terminal 2: pipeline de visión
+python -m src.main
+~~~
+
+Cuando la fruta cambia de estado (por ejemplo, de inmadura a madura), `src/main.py` hace `POST /api/registro` con el estado y los porcentajes. La ventana del pipeline muestra los contadores `DASH: OK:X FAIL:Y` — si el dashboard no está corriendo, verás `FAIL` subir pero el pipeline sigue funcionando sin caerse.
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
