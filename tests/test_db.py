@@ -166,8 +166,140 @@ def test_ultimos_registros_tiene_campos_completos(db_tmp):
     insertar_registro("S", 1.5, 2.5, 3.5, db_path=db_tmp)
     r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
     assert set(r.keys()) == {
-        "id", "estado", "pct_verde", "pct_madura", "pct_pasada", "timestamp"
+        "id", "estado", "pct_verde", "pct_madura", "pct_pasada", "tipo_fruta", "timestamp"
     }
     assert r["pct_verde"] == 1.5
     assert r["pct_madura"] == 2.5
     assert r["pct_pasada"] == 3.5
+
+
+# ---------- tipo_fruta (S4.1) ----------
+
+def test_insertar_registro_tipo_fruta_default(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_insertar_registro_tipo_fruta_explicito(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("A", 4, 5, 6, tipo_fruta="mandarina", db_path=db_tmp)
+    ultimos = obtener_ultimos_registros(n=10, db_path=db_tmp)
+    tipos = {r["tipo_fruta"] for r in ultimos}
+    assert tipos == {"platano", "mandarina"}
+
+
+def test_insertar_registro_tipo_vacio_usa_default(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="   ", db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_migracion_agrega_columna_a_db_sin_ella(tmp_path):
+    """Simula una DB creada antes de S4.1: sin la columna tipo_fruta."""
+    db = str(tmp_path / "viejo.db")
+    conn = conectar(db)
+    try:
+        conn.executescript("""
+            CREATE TABLE registros (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                estado          TEXT NOT NULL CHECK (estado IN ('S', 'A', 'R')),
+                pct_verde       REAL NOT NULL,
+                pct_madura      REAL NOT NULL,
+                pct_pasada      REAL NOT NULL,
+                timestamp       TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+            );
+        """)
+        conn.execute(
+            "INSERT INTO registros (estado, pct_verde, pct_madura, pct_pasada) "
+            "VALUES ('S', 1, 2, 3)"
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # init_db debe migrar sin error
+    init_db(db)
+
+    # La fila vieja recibe el default
+    r = obtener_ultimos_registros(n=1, db_path=db)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_init_db_idempotente_con_tipo_fruta(db_tmp):
+    """Llamar init_db varias veces no falla aunque ya exista tipo_fruta."""
+    init_db(db_tmp)
+    init_db(db_tmp)
+    init_db(db_tmp)
+    insertar_registro("A", 1, 2, 3, tipo_fruta="manzana_verde", db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "manzana_verde"
+
+
+# ---------- tipo_fruta (S4.1) ----------
+
+def test_insertar_registro_tipo_fruta_default(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_insertar_registro_tipo_fruta_explicito(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("A", 4, 5, 6, tipo_fruta="mandarina", db_path=db_tmp)
+    ultimos = obtener_ultimos_registros(n=10, db_path=db_tmp)
+    tipos = {r["tipo_fruta"] for r in ultimos}
+    assert tipos == {"platano", "mandarina"}
+
+
+def test_insertar_registro_tipo_vacio_usa_default(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="   ", db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_migracion_agrega_columna_a_db_sin_ella(tmp_path):
+    """Simula una DB creada antes de S4.1: sin la columna tipo_fruta."""
+    db = str(tmp_path / "viejo.db")
+    conn = conectar(db)
+    try:
+        conn.executescript("""
+            CREATE TABLE registros (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                estado          TEXT NOT NULL CHECK (estado IN ('S', 'A', 'R')),
+                pct_verde       REAL NOT NULL,
+                pct_madura      REAL NOT NULL,
+                pct_pasada      REAL NOT NULL,
+                timestamp       TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+            );
+        """)
+        conn.execute(
+            "INSERT INTO registros (estado, pct_verde, pct_madura, pct_pasada) "
+            "VALUES ('S', 1, 2, 3)"
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # init_db debe migrar sin error
+    init_db(db)
+
+    # La fila vieja recibe el default
+    r = obtener_ultimos_registros(n=1, db_path=db)[0]
+    assert r["tipo_fruta"] == "desconocida"
+
+
+def test_init_db_idempotente_con_tipo_fruta(db_tmp):
+    """Llamar init_db varias veces no falla aunque ya exista tipo_fruta."""
+    init_db(db_tmp)
+    init_db(db_tmp)
+    init_db(db_tmp)
+    insertar_registro("A", 1, 2, 3, tipo_fruta="manzana_verde", db_path=db_tmp)
+    r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
+    assert r["tipo_fruta"] == "manzana_verde"

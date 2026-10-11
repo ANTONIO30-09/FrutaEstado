@@ -129,6 +129,7 @@ Esquema de la tabla `registros`:
 | `pct_verde` | REAL | Porcentaje de píxeles verdes en la ROI |
 | `pct_madura` | REAL | Porcentaje de píxeles maduros |
 | `pct_pasada` | REAL | Porcentaje de píxeles pasados |
+| `tipo_fruta` | TEXT | Tipo de fruta (default: 'desconocida') |
 | `timestamp` | TEXT | ISO en hora local |
 
 ### Arrancar el dashboard
