@@ -165,6 +165,23 @@ Los campos no especificados toman los valores del contrato original. El perfil q
 
 Los perfiles built-in (en `src/perfiles_frutas.py`) son puntos de partida teoricos. Los perfiles de `config/perfiles_custom.json` fueron calibrados a partir de tablas HSV publicas para: platano, mandarina, manzana verde, manzana roja, uva verde, uva morada. Se recomienda recalibrar con las frutas y la iluminacion reales del entorno de la demo.
 
+**Probar sin hardware — mock del ESP32:**
+
+Si el ESP32 real no esta disponible (o como plan B en la demo), se puede levantar un mock que responde el mismo contrato en el puerto 8080:
+
+~~~bash
+python -m tools.mock_esp32
+~~~
+
+Imprime cada peticion que recibe con timestamp. Para que el pipeline le hable al mock en lugar del ESP32 real, ajusta el `.env`:
+
+~~~
+ESP32_IP=127.0.0.1
+ESP32_PORT=8080
+~~~
+
+Y reinicia el pipeline. Cuando el ESP32 real este disponible, volve a su IP real y detene el mock con `Ctrl+C`. No hay que cambiar codigo.
+
 **Cambiar de perfil sin reiniciar el dashboard:**
 
 ~~~bash
