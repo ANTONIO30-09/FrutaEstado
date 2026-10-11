@@ -1,0 +1,142 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 1.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+header h1 {
+  margin: 0;
+  color: #4ade80;
+  font-size: 1.8rem;
+}
+
+header .subtitulo {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+#estado-conexion {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.contadores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.contador {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.contador .num {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.contador .lbl {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.3rem;
+}
+
+.contador.s .num { color: #ef4444; }
+.contador.a .num { color: #22c55e; }
+.contador.r .num { color: #f59e0b; }
+.contador.t .num { color: #60a5fa; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 280px;
+}
+
+.tabla-wrap {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #334155;
+}
+
+th {
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 800px) {
+  .contadores { grid-template-columns: repeat(2, 1fr); }
+  .grid { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.4rem; }
+}

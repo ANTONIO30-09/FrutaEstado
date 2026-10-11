@@ -161,6 +161,25 @@ python -m src.main
 
 Cuando la fruta cambia de estado (por ejemplo, de inmadura a madura), `src/main.py` hace `POST /api/registro` con el estado y los porcentajes. La ventana del pipeline muestra los contadores `DASH: OK:X FAIL:Y` — si el dashboard no está corriendo, verás `FAIL` subir pero el pipeline sigue funcionando sin caerse.
 
+### Panel visual (Chart.js)
+
+El dashboard se compone de cuatro bloques:
+
+1. **Contadores grandes** — totales por estado (S/A/R) y total general.
+2. **Doughnut** — distribución de registros por estado.
+3. **Línea temporal** — registros agrupados por minuto durante la última hora.
+4. **Tabla** — últimos 10 registros con hora, estado y porcentajes.
+
+Se actualiza automáticamente cada **6 segundos** consultando `GET /api/resumen` (sin recargar la página). Chart.js se incluye localmente en `dashboard/static/js/chart.umd.min.js`, sin depender de CDN.
+
+**Abrir el dashboard desde el celular** (misma red WiFi que la laptop):
+
+~~~
+http://<IP-DE-LA-LAPTOP>:5000/
+~~~
+
+La IP la puedes ver con `hostname -I` o `ip a`.
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
