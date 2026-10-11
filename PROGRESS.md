@@ -24,22 +24,22 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] `PROGRESS.md` (este archivo)
 - [x] `requirements.txt` con dependencias base
 - [x] `docs/decisiones.md` con justificación HSV vs YOLO/CNN
-- [ ] Rama `dev` creada y `main` protegida en GitHub
+- [x] Rama `dev` creada y `main` protegida en GitHub
 
 ---
 
 ## Pendiente
 
 ### Semana 2 — Script de visión + clasificación HSV
-- [ ] Script de captura del stream MJPEG (`CAM_URL` del `.env`)
-- [ ] Implementación de la clasificación HSV según contrato:
+- [x] Script de captura del stream MJPEG (`CAM_URL` del `.env`)
+- [x] Implementación de la clasificación HSV según contrato:
   - ROI central (25%, 20%, 50%, 60% relativos)
   - Filtro de píxeles: S >= 50 y V >= 30
   - Verde (inmadura): 35 <= H <= 85
   - Madura: H <= 35 o H >= 160, con V >= 110 y S >= 80
   - Pasada: H <= 25 y V < 110
   - Filtro de mayoría sobre los últimos 7 cuadros
-- [ ] Script de envío HTTP al ESP32 (`GET /estado?valor=S|A|R`), heartbeat cada 1 s
+- [x] Script de envío HTTP al ESP32 (`GET /estado?valor=S|A|R`), heartbeat cada 1 s
 - [ ] Registro en dashboard solo cuando cambia el estado
 - [ ] Tests pytest de la función de clasificación HSV con frames de prueba
 

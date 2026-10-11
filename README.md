@@ -57,7 +57,64 @@ cp .env.example .env   # editar con las IPs reales
 
 ## Uso
 
-_(se documentará al completar los hitos de la Semana 2 y 3)_
+### Probar la captura de video
+
+Antes de cualquier clasificación, se puede verificar que la fuente de video llega bien:
+
+~~~bash
+python -m src.captura
+~~~
+
+Esto abre una ventana con los frames en vivo y muestra los FPS en la esquina superior izquierda. Se cierra con la tecla `q`.
+
+**Dos modos de `CAM_URL` en `.env`:**
+
+- **Desarrollo (webcam de la laptop):**
+  ~~~
+  CAM_URL=0
+  ~~~
+- **Demo (celular con DroidCam por el hotspot del iPhone):**
+  ~~~
+  CAM_URL=http://<IP-DEL-IPHONE>:4747/video
+  ~~~
+
+> **Nota sobre la red en la universidad:** las redes WiFi institucionales suelen aislar a los dispositivos entre sí (AP isolation), por lo que el celular y la laptop no se verán aunque estén "en la misma red". Para la demo se recomienda activar el punto de acceso personal del iPhone y conectar la laptop (y el ESP32) a ese hotspot.
+
+### Probar la clasificación HSV
+
+Una vez verificada la captura, se puede probar el clasificador en vivo:
+
+~~~bash
+python -m src.clasificador
+~~~
+
+Muestra la ventana con el rectángulo de la ROI, el estado detectado (S/A/R o `-`), los porcentajes de píxeles verdes/maduros/pasados y el total de píxeles de fruta. Se cierra con `q`.
+
+**Reglas de clasificación (contrato del proyecto):**
+
+- ROI central: 25% horizontal, 20% vertical, 50% ancho, 60% alto.
+- Filtro de fruta: S >= 50 y V >= 30.
+- Verde (inmadura, `A`): 35 <= H <= 85.
+- Madura (`S`): H <= 35 o H >= 160, con V >= 110 y S >= 80.
+- Pasada (`R`): H <= 25 y V < 110.
+- Filtro de mayoría sobre los últimos 7 cuadros para evitar parpadeos.
+
+### Ejecutar el sistema completo
+
+Con la captura y la clasificación verificadas, se levanta el pipeline completo:
+
+~~~bash
+python -m src.main
+~~~
+
+Esto abre la ventana con la ROI, el estado clasificado en vivo, los porcentajes de píxeles y el estado del enlace con el ESP32 (contadores OK/FAIL y timestamp del último envío exitoso). Se cierra con `q`.
+
+**Comportamiento del heartbeat:**
+
+- El clasificador corre a la velocidad que le permita la cámara.
+- El envío al ESP32 (`GET /estado?valor=S|A|R`) se dispara **exactamente cada 1 segundo**, independientemente de los FPS de captura.
+- Si el ESP32 no responde (apagado, timeout, IP mal configurada), el script **no se cae**: muestra `ESP32: FAIL` en pantalla y sigue clasificando.
+- Si el estado filtrado es `None` (no hay fruta en la ROI), no se envía nada al ESP32 hasta que aparezca una fruta.
 
 ## Hitos
 
