@@ -41,6 +41,7 @@ def test_enviar_registro_201_devuelve_true():
             "pct_verde": 10.0,
             "pct_madura": 80.0,
             "pct_pasada": 10.0,
+            "tipo_fruta": "desconocida",
         }
         assert kwargs["timeout"] == 2.0
 
@@ -103,3 +104,37 @@ def test_enviar_registro_timeout_personalizado():
         enviar_registro("127.0.0.1", 5000, "S", 0, 0, 0, timeout=5.0)
         _, kwargs = m.call_args
         assert kwargs["timeout"] == 5.0
+
+
+# ---------- tipo_fruta (S4.2) ----------
+
+def test_enviar_registro_con_tipo_fruta_explicito():
+    from unittest.mock import patch
+    with patch(
+        "src.cliente_dashboard.requests.post", return_value=_respuesta(201)
+    ) as m:
+        enviar_registro(
+            "127.0.0.1", 5000, "S", 10.0, 80.0, 10.0, tipo_fruta="platano"
+        )
+        _, kwargs = m.call_args
+        assert kwargs["json"]["tipo_fruta"] == "platano"
+
+
+def test_enviar_registro_tipo_fruta_vacio_usa_default():
+    from unittest.mock import patch
+    with patch(
+        "src.cliente_dashboard.requests.post", return_value=_respuesta(201)
+    ) as m:
+        enviar_registro("127.0.0.1", 5000, "S", 10.0, 80.0, 10.0, tipo_fruta="   ")
+        _, kwargs = m.call_args
+        assert kwargs["json"]["tipo_fruta"] == "desconocida"
+
+
+def test_enviar_registro_sin_tipo_fruta_usa_default():
+    from unittest.mock import patch
+    with patch(
+        "src.cliente_dashboard.requests.post", return_value=_respuesta(201)
+    ) as m:
+        enviar_registro("127.0.0.1", 5000, "S", 10.0, 80.0, 10.0)
+        _, kwargs = m.call_args
+        assert kwargs["json"]["tipo_fruta"] == "desconocida"

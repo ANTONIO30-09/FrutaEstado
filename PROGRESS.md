@@ -51,7 +51,9 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 
 ### Semana 4 — Integración ESP32 + precisión
 - [x] Columna `tipo_fruta` en `registros` con migracion idempotente
+- [x] Perfiles HSV por fruta (`src/perfiles_frutas.py`) con soporte para agregar frutas via JSON
 - [x] Columna `tipo_fruta` en `registros` con migracion idempotente
+- [x] Perfiles HSV por fruta (`src/perfiles_frutas.py`) con soporte para agregar frutas via JSON
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)
 - [ ] Pruebas de precisión con frutas reales — ajustar umbrales HSV si hace falta
 

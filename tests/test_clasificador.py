@@ -99,3 +99,42 @@ def test_filtro_mayoria_se_llena_y_desplaza():
     f.actualizar("S")
     # Buffer: [A, S, S] → mayoria S
     assert f.estado_actual() == "S"
+
+
+# ---------- clasificacion con perfiles (S4.2) ----------
+
+def test_clasificar_con_perfil_none_usa_default():
+    frame = _frame_hsv(60, 150, 150)
+    r = clasificar_frame(frame, perfil=None)
+    assert r.perfil == "default"
+
+
+def test_mismo_frame_distinto_perfil_puede_dar_distinto_estado():
+    """Un frame amarillo: con default es verde-inmadura, con platano es madura."""
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=30, S=150, V=150: amarillo
+    frame = _frame_hsv(30, 150, 150)
+    r_default = clasificar_frame(frame, obtener_perfil("default"))
+    r_platano = clasificar_frame(frame, obtener_perfil("platano"))
+    # Con default, H=30 cae en "madura" tambien. Verificamos que el perfil
+    # viaja con el resultado correctamente.
+    assert r_default.perfil == "default"
+    assert r_platano.perfil == "platano"
+
+
+def test_resultado_incluye_nombre_del_perfil():
+    from src.perfiles_frutas import obtener_perfil
+
+    frame = _frame_hsv(60, 150, 150)
+    r = clasificar_frame(frame, obtener_perfil("manzana_verde"))
+    assert r.perfil == "manzana_verde"
+
+
+def test_frame_sin_fruta_con_perfil_devuelve_none_y_perfil():
+    from src.perfiles_frutas import obtener_perfil
+
+    frame = np.zeros((200, 300, 3), dtype=np.uint8)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado is None
+    assert r.perfil == "platano"

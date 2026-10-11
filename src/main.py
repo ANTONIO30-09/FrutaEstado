@@ -23,6 +23,7 @@ from src.clasificador import (
     clasificar_frame,
 )
 from src.cliente_dashboard import enviar_registro
+from src.perfiles_frutas import PerfilFruta, obtener_perfil
 from src.cliente_esp32 import enviar_estado
 from src.config import Config, cargar_config
 
@@ -40,10 +41,13 @@ def _dibujar_overlay(
     dash_ok: int,
     dash_fail: int,
     ultimo_ok_ts: float | None,
+    perfil: PerfilFruta,
 ) -> None:
     alto, ancho = frame.shape[:2]
-    x0, y0 = int(ancho * 0.25), int(alto * 0.20)
-    x1, y1 = x0 + int(ancho * 0.50), y0 + int(alto * 0.60)
+    x0 = int(ancho * perfil.roi_x_rel)
+    y0 = int(alto * perfil.roi_y_rel)
+    x1 = x0 + int(ancho * perfil.roi_w_rel)
+    y1 = y0 + int(alto * perfil.roi_h_rel)
     cv2.rectangle(frame, (x0, y0), (x1, y1), (255, 255, 0), 2)
 
     texto_estado = estado_filtrado if estado_filtrado else "-"
@@ -104,6 +108,15 @@ def _dibujar_overlay(
         color_dash,
         1,
     )
+    cv2.putText(
+        frame,
+        f"Perfil: {perfil.nombre}",
+        (10, 150),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.5,
+        (100, 200, 255),
+        1,
+    )
 
 
 def _loop(cfg: Config) -> int:
@@ -114,7 +127,8 @@ def _loop(cfg: Config) -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
 
-    filtro = FiltroMayoria()
+    perfil: PerfilFruta = obtener_perfil(cfg.perfil_fruta)
+    filtro = FiltroMayoria(perfil.ventana_mayoria)
     esp_ok = 0
     esp_fail = 0
     dash_ok = 0
@@ -141,7 +155,7 @@ def _loop(cfg: Config) -> int:
             estado_filtrado: str | None = None
 
             if frame is not None:
-                resultado = clasificar_frame(frame)
+                resultado = clasificar_frame(frame, perfil)
                 estado_filtrado = filtro.actualizar(resultado.estado)
 
             # Heartbeat al ESP32 exactamente cada INTERVALO_HEARTBEAT_S
@@ -176,6 +190,7 @@ def _loop(cfg: Config) -> int:
                     pct_verde=resultado.pct_verde,
                     pct_madura=resultado.pct_madura,
                     pct_pasada=resultado.pct_pasada,
+                    tipo_fruta=perfil.nombre,
                 )
                 if ok:
                     dash_ok += 1
@@ -193,6 +208,7 @@ def _loop(cfg: Config) -> int:
                     dash_ok,
                     dash_fail,
                     ultimo_ok_ts,
+                    perfil,
                 )
                 cv2.imshow("FrutaEstado - Main", frame)
 
