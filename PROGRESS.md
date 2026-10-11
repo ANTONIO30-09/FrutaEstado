@@ -43,7 +43,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 ## Pendiente
 
 ### Semana 3 — Dashboard Flask + SQLite
-- [ ] Modelo SQLite (tabla `registros`: id, estado, pct_verde, pct_madura, pct_pasada, timestamp)
+- [x] Modelo SQLite (tabla `registros`: id, estado, pct_verde, pct_madura, pct_pasada, timestamp)
 - [ ] API Flask: `GET /`, `POST /api/registro`, `GET /api/resumen`
 - [ ] Frontend con Chart.js (conteos por estado + serie por minuto + últimos 10 registros)
 - [ ] Tests pytest de endpoints Flask

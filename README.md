@@ -116,6 +116,21 @@ Esto abre la ventana con la ROI, el estado clasificado en vivo, los porcentajes 
 - Si el ESP32 no responde (apagado, timeout, IP mal configurada), el script **no se cae**: muestra `ESP32: FAIL` en pantalla y sigue clasificando.
 - Si el estado filtrado es `None` (no hay fruta en la ROI), no se envía nada al ESP32 hasta que aparezca una fruta.
 
+### Base de datos (Semana 3)
+
+El dashboard (Semana 3) usa SQLite local. La base de datos se crea automáticamente al arrancar el dashboard en la ruta definida por `DB_PATH` en `.env` (por defecto `data/frutas.db`). Esa ruta está en `.gitignore` — la base **no se sube al repositorio**.
+
+Esquema de la tabla `registros`:
+
+| Columna | Tipo | Notas |
+|---------|------|-------|
+| `id` | INTEGER | PK autoincremental |
+| `estado` | TEXT | CHECK en ('S', 'A', 'R') |
+| `pct_verde` | REAL | Porcentaje de píxeles verdes en la ROI |
+| `pct_madura` | REAL | Porcentaje de píxeles maduros |
+| `pct_pasada` | REAL | Porcentaje de píxeles pasados |
+| `timestamp` | TEXT | ISO en hora local |
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
