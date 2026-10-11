@@ -50,6 +50,8 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Integración desde `src/main.py`: `POST /api/registro` cuando el estado cambia
 
 ### Semana 4 — Integración ESP32 + precisión
+- [x] Columna `tipo_fruta` en `registros` con migracion idempotente
+- [x] Columna `tipo_fruta` en `registros` con migracion idempotente
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)
 - [ ] Pruebas de precisión con frutas reales — ajustar umbrales HSV si hace falta
 
