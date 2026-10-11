@@ -57,6 +57,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Selector de fruta en el dashboard con hot-swap del perfil en el pipeline
 - [x] API: endpoints `/api/perfil` (GET/POST) y `/api/perfiles`
 - [x] Filtro por `tipo_fruta` en `/api/resumen`
+- [x] Mock del ESP32 (`tools/mock_esp32.py`) para desarrollo sin hardware
 - [x] Columna `tipo_fruta` en `registros` con migracion idempotente
 - [x] Perfiles HSV por fruta (`src/perfiles_frutas.py`) con soporte para agregar frutas via JSON
 - [x] 6 perfiles calibrados desde tablas HSV publicas (`config/perfiles_custom.json`)
@@ -64,6 +65,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Selector de fruta en el dashboard con hot-swap del perfil en el pipeline
 - [x] API: endpoints `/api/perfil` (GET/POST) y `/api/perfiles`
 - [x] Filtro por `tipo_fruta` en `/api/resumen`
+- [x] Mock del ESP32 (`tools/mock_esp32.py`) para desarrollo sin hardware
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)
 - [ ] Pruebas de precisión con frutas reales — ajustar umbrales HSV si hace falta
 
