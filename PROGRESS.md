@@ -31,7 +31,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 ## Pendiente
 
 ### Semana 2 — Script de visión + clasificación HSV
-- [ ] Script de captura del stream MJPEG (`CAM_URL` del `.env`)
+- [x] Script de captura del stream MJPEG (`CAM_URL` del `.env`)
 - [ ] Implementación de la clasificación HSV según contrato:
   - ROI central (25%, 20%, 50%, 60% relativos)
   - Filtro de píxeles: S >= 50 y V >= 30

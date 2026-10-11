@@ -57,7 +57,28 @@ cp .env.example .env   # editar con las IPs reales
 
 ## Uso
 
-_(se documentará al completar los hitos de la Semana 2 y 3)_
+### Probar la captura de video
+
+Antes de cualquier clasificación, se puede verificar que la fuente de video llega bien:
+
+~~~bash
+python -m src.captura
+~~~
+
+Esto abre una ventana con los frames en vivo y muestra los FPS en la esquina superior izquierda. Se cierra con la tecla `q`.
+
+**Dos modos de `CAM_URL` en `.env`:**
+
+- **Desarrollo (webcam de la laptop):**
+  ~~~
+  CAM_URL=0
+  ~~~
+- **Demo (celular con DroidCam por el hotspot del iPhone):**
+  ~~~
+  CAM_URL=http://<IP-DEL-IPHONE>:4747/video
+  ~~~
+
+> **Nota sobre la red en la universidad:** las redes WiFi institucionales suelen aislar a los dispositivos entre sí (AP isolation), por lo que el celular y la laptop no se verán aunque estén "en la misma red". Para la demo se recomienda activar el punto de acceso personal del iPhone y conectar la laptop (y el ESP32) a ese hotspot.
 
 ## Hitos
 
