@@ -34,6 +34,7 @@ def enviar_registro(
     pct_verde: float,
     pct_madura: float,
     pct_pasada: float,
+    tipo_fruta: str = "desconocida",
     timeout: float = TIMEOUT_POR_DEFECTO,
 ) -> bool:
     """Hace POST /api/registro con el payload JSON.
@@ -52,6 +53,7 @@ def enviar_registro(
         "pct_verde": float(pct_verde),
         "pct_madura": float(pct_madura),
         "pct_pasada": float(pct_pasada),
+        "tipo_fruta": (tipo_fruta or "desconocida").strip() or "desconocida",
     }
 
     try:

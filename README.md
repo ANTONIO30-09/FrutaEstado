@@ -130,6 +130,44 @@ Esquema de la tabla `registros`:
 | `pct_madura` | REAL | Porcentaje de píxeles maduros |
 | `pct_pasada` | REAL | Porcentaje de píxeles pasados |
 | `tipo_fruta` | TEXT | Tipo de fruta (default: 'desconocida') |
+
+### Perfiles HSV por tipo de fruta
+
+El clasificador soporta umbrales HSV especificos por fruta. El perfil activo se define en `.env` con `PERFIL_FRUTA=<nombre>` y se aplica en el pipeline.
+
+**Perfiles incluidos:**
+
+| Perfil | Fruta | Notas |
+|--------|-------|-------|
+| `default` | Generico | Contrato original del proyecto, sin cambios |
+| `platano` | Platano | Amarillo maduro |
+| `mandarina` | Mandarina | Naranja maduro |
+| `manzana_verde` | Manzana verde | Verde-amarillento maduro |
+| `manzana_roja` | Manzana roja | Rojo maduro |
+| `uva_verde` | Uva verde | Verde claro maduro |
+| `uva_morada` | Uva morada | Morado maduro |
+
+**Agregar un perfil nuevo sin tocar codigo** — edita `config/perfiles_custom.json`:
+
+~~~json
+{
+  "pera": {
+    "h_madura_max_bajo": 30,
+    "s_madura_min": 70,
+    "v_madura_min": 100
+  }
+}
+~~~
+
+Los campos no especificados toman los valores del contrato original. El perfil queda disponible en `.env` con `PERFIL_FRUTA=pera`.
+
+**Cambiar de perfil sin reiniciar el dashboard:**
+
+~~~bash
+# Editar .env y cambiar PERFIL_FRUTA
+# Reiniciar solo el pipeline (no el dashboard)
+python -m src.main
+~~~
 | `timestamp` | TEXT | ISO en hora local |
 
 ### Arrancar el dashboard

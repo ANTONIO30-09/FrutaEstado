@@ -31,6 +31,7 @@ class Config:
     flask_host: str
     flask_port: int
     db_path: str
+    perfil_fruta: str
 
 
 def _parsear_cam_url(valor: str) -> str | int:
@@ -62,4 +63,5 @@ def cargar_config() -> Config:
         flask_host=os.getenv("FLASK_HOST", "0.0.0.0"),
         flask_port=int(os.getenv("FLASK_PORT", "5000")),
         db_path=os.getenv("DB_PATH", "data/frutas.db"),
+        perfil_fruta=os.getenv("PERFIL_FRUTA", "default"),
     )

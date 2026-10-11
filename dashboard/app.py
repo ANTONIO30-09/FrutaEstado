@@ -75,11 +75,14 @@ def crear_app(db_path: str | None = None) -> Flask:
                     400,
                 )
 
+        tipo_fruta = str(datos.get("tipo_fruta", "desconocida")).strip() or "desconocida"
+
         nuevo_id = insertar_registro(
             estado=estado,
             pct_verde=porcentajes["pct_verde"],
             pct_madura=porcentajes["pct_madura"],
             pct_pasada=porcentajes["pct_pasada"],
+            tipo_fruta=tipo_fruta,
             db_path=db_path,
         )
         return jsonify({"id": nuevo_id}), 201
