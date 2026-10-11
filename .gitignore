@@ -1,0 +1,56 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Entornos virtuales ---
+venv/
+env/
+.venv/
+ENV/
+
+# --- Variables de entorno y secretos ---
+.env
+.env.local
+*.env.local
+
+# --- Base de datos local ---
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# --- Capturas, videos y frames de prueba ---
+data/*.jpg
+data/*.jpeg
+data/*.png
+data/*.mp4
+data/*.avi
+data/*.mov
+
+# --- Testing / cobertura ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- IDE / Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/

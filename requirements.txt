@@ -1,0 +1,15 @@
+# --- Visión por computadora ---
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# --- Dashboard web ---
+Flask>=3.0.0
+
+# --- Cliente HTTP hacia ESP32 ---
+requests>=2.31.0
+
+# --- Configuración ---
+python-dotenv>=1.0.0
+
+# --- Testing ---
+pytest>=7.4.0
