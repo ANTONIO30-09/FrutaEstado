@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrutaEstado — Dashboard</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 2rem;
+      background: #111;
+      color: #eee;
+    }
+    h1 { color: #4ade80; }
+    #resumen { margin-top: 1rem; font-family: monospace; white-space: pre-wrap; }
+    .aviso {
+      background: #333;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #facc15;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>FrutaEstado — Dashboard</h1>
+  <div class="aviso">
+    Placeholder. El frontend completo con Chart.js se implementa en la tarea S3.4.
+  </div>
+  <p>Estado de la API: <span id="ping">consultando…</span></p>
+  <div id="resumen"></div>
+
+  <script>
+    fetch('/api/resumen')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('ping').textContent = 'OK';
+        document.getElementById('resumen').textContent =
+          JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById('ping').textContent = 'ERROR: ' + err;
+      });
+  </script>
+</body>
+</html>

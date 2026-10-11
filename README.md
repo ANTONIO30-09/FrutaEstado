@@ -131,6 +131,22 @@ Esquema de la tabla `registros`:
 | `pct_pasada` | REAL | Porcentaje de píxeles pasados |
 | `timestamp` | TEXT | ISO en hora local |
 
+### Arrancar el dashboard
+
+~~~bash
+python run.py
+~~~
+
+Abre `http://localhost:5000/` en el navegador. La primera vez crea automáticamente la base `data/frutas.db` (ignorada por git) y sirve un placeholder que consulta `/api/resumen`.
+
+**Endpoints de la API:**
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET  | `/`             | Página del dashboard (placeholder hasta S3.4) |
+| POST | `/api/registro` | Inserta una fila. Body: `{estado, pct_verde, pct_madura, pct_pasada}` |
+| GET  | `/api/resumen`  | Devuelve `{conteos, serie_por_minuto, ultimos}` |
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
