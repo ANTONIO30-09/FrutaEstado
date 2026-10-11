@@ -47,7 +47,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] API Flask: `GET /`, `POST /api/registro`, `GET /api/resumen`
 - [ ] Frontend con Chart.js (conteos por estado + serie por minuto + últimos 10 registros)
 - [ ] Tests pytest de endpoints Flask
-- [ ] Integración desde `src/main.py`: `POST /api/registro` cuando el estado cambia (TODO S3.3)
+- [x] Integración desde `src/main.py`: `POST /api/registro` cuando el estado cambia
 
 ### Semana 4 — Integración ESP32 + precisión
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)
