@@ -303,3 +303,57 @@ def test_init_db_idempotente_con_tipo_fruta(db_tmp):
     insertar_registro("A", 1, 2, 3, tipo_fruta="manzana_verde", db_path=db_tmp)
     r = obtener_ultimos_registros(n=1, db_path=db_tmp)[0]
     assert r["tipo_fruta"] == "manzana_verde"
+
+
+# ---------- filtro por tipo_fruta (S4.4) ----------
+
+def test_conteos_filtrados_por_tipo_fruta(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 0, 0, 0, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("S", 0, 0, 0, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("A", 0, 0, 0, tipo_fruta="manzana_verde", db_path=db_tmp)
+    insertar_registro("R", 0, 0, 0, tipo_fruta="uva_morada", db_path=db_tmp)
+
+    assert obtener_conteos_por_estado(db_path=db_tmp) == {"S": 2, "A": 1, "R": 1}
+    assert obtener_conteos_por_estado(db_path=db_tmp, tipo_fruta="platano") == {
+        "S": 2, "A": 0, "R": 0
+    }
+    assert obtener_conteos_por_estado(db_path=db_tmp, tipo_fruta="uva_morada") == {
+        "S": 0, "A": 0, "R": 1
+    }
+    assert obtener_conteos_por_estado(db_path=db_tmp, tipo_fruta="kiwi") == {
+        "S": 0, "A": 0, "R": 0
+    }
+
+
+def test_ultimos_filtrados_por_tipo_fruta(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("A", 4, 5, 6, tipo_fruta="manzana_roja", db_path=db_tmp)
+    insertar_registro("R", 7, 8, 9, tipo_fruta="platano", db_path=db_tmp)
+
+    solo_platano = obtener_ultimos_registros(n=10, db_path=db_tmp, tipo_fruta="platano")
+    assert len(solo_platano) == 2
+    assert all(r["tipo_fruta"] == "platano" for r in solo_platano)
+
+
+def test_serie_por_minuto_filtrada(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 0, 0, 0, tipo_fruta="platano", db_path=db_tmp)
+    insertar_registro("S", 0, 0, 0, tipo_fruta="uva_verde", db_path=db_tmp)
+
+    serie_platano = obtener_serie_por_minuto(db_path=db_tmp, tipo_fruta="platano")
+    total_platano = sum(item["conteo"] for item in serie_platano)
+    assert total_platano == 1
+
+    serie_todos = obtener_serie_por_minuto(db_path=db_tmp)
+    total_todos = sum(item["conteo"] for item in serie_todos)
+    assert total_todos == 2
+
+
+def test_filtro_none_es_igual_a_sin_filtro(db_tmp):
+    init_db(db_tmp)
+    insertar_registro("S", 1, 2, 3, tipo_fruta="platano", db_path=db_tmp)
+    a = obtener_conteos_por_estado(db_path=db_tmp)
+    b = obtener_conteos_por_estado(db_path=db_tmp, tipo_fruta=None)
+    assert a == b

@@ -1,17 +1,34 @@
-// Dashboard FrutaEstado — cliente Chart.js
-// Consulta GET /api/resumen cada REFRESH_MS y actualiza los 3 paneles.
+// Dashboard FrutaEstado — cliente Chart.js con selector de fruta.
+// Consulta GET /api/resumen?tipo_fruta=X cada REFRESH_MS.
+// Al cambiar el selector: POST /api/perfil y refetch inmediato.
 
 const REFRESH_MS = 6000;
-
 const COLORES = { S: "#ef4444", A: "#22c55e", R: "#f59e0b" };
 
 let chartConteos = null;
 let chartSerie = null;
+let tipoFrutaFiltro = "";  // "" = sin filtro
 
 async function fetchResumen() {
-  const r = await fetch("/api/resumen");
+  const url = tipoFrutaFiltro
+    ? "/api/resumen?tipo_fruta=" + encodeURIComponent(tipoFrutaFiltro)
+    : "/api/resumen";
+  const r = await fetch(url);
   if (!r.ok) throw new Error("HTTP " + r.status);
   return await r.json();
+}
+
+async function setPerfilEnBackend(nombre) {
+  try {
+    const r = await fetch("/api/perfil", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ perfil: nombre }),
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
 function initChartConteos() {
@@ -79,7 +96,6 @@ function actualizarConteos(conteos) {
   document.getElementById("contador-a").textContent = a;
   document.getElementById("contador-r").textContent = r;
   document.getElementById("contador-total").textContent = s + a + r;
-
   if (chartConteos) {
     chartConteos.data.datasets[0].data = [s, a, r];
     chartConteos.update();
@@ -105,7 +121,7 @@ function actualizarTabla(ultimos) {
   tbody.innerHTML = "";
   if (ultimos.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:#64748b;">Sin registros todavia</td></tr>';
+      '<tr><td colspan="6" style="text-align:center;color:#64748b;">Sin registros todavía</td></tr>';
     return;
   }
   for (const r of ultimos) {
@@ -116,6 +132,7 @@ function actualizarTabla(ultimos) {
       "<td>" + hora + "</td>" +
       '<td><span class="badge" style="background:' + color + '">' +
       r.estado + "</span></td>" +
+      "<td>" + (r.tipo_fruta || "desconocida") + "</td>" +
       "<td>" + r.pct_verde.toFixed(1) + "%</td>" +
       "<td>" + r.pct_madura.toFixed(1) + "%</td>" +
       "<td>" + r.pct_pasada.toFixed(1) + "%</td>";
@@ -142,9 +159,27 @@ async function tick() {
   }
 }
 
+async function onSelectorChange(ev) {
+  const valor = ev.target.value;
+  tipoFrutaFiltro = valor;
+
+  // Si eligio "Ver todos", no cambiamos perfil en el pipeline (sigue el actual).
+  // Si eligio una fruta concreta, se la mandamos al pipeline.
+  if (valor && valor !== "default") {
+    await setPerfilEnBackend(valor);
+  }
+
+  // Refetch inmediato con el nuevo filtro
+  await tick();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initChartConteos();
   initChartSerie();
+
+  const sel = document.getElementById("selector-fruta");
+  if (sel) sel.addEventListener("change", onSelectorChange);
+
   tick();
   setInterval(tick, REFRESH_MS);
 });

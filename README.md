@@ -189,6 +189,9 @@ Abre `http://localhost:5000/` en el navegador. La primera vez crea automáticame
 | GET  | `/`             | Página del dashboard (placeholder hasta S3.4) |
 | POST | `/api/registro` | Inserta una fila. Body: `{estado, pct_verde, pct_madura, pct_pasada}` |
 | GET  | `/api/resumen`  | Devuelve `{conteos, serie_por_minuto, ultimos}` |
+| GET  | `/api/perfil`   | Devuelve el perfil activo del pipeline |
+| POST | `/api/perfil`   | Cambia el perfil activo (`{"perfil":"platano"}`) |
+| GET  | `/api/perfiles` | Lista todos los perfiles disponibles |
 
 ### Ejecutar el pipeline completo con dashboard
 
@@ -222,6 +225,16 @@ http://<IP-DE-LA-LAPTOP>:5000/
 ~~~
 
 La IP la puedes ver con `hostname -I` o `ip a`.
+
+### Cambiar de fruta desde el dashboard
+
+El dashboard incluye un selector arriba a la derecha. Al elegir una fruta:
+
+1. El selector filtra las gráficas y la tabla (solo muestra registros de esa fruta).
+2. El dashboard hace `POST /api/perfil` para cambiar el perfil activo.
+3. El pipeline (`python -m src.main`) consulta el perfil cada 2 segundos y lo aplica en caliente, **sin reiniciar el script**.
+
+Con "Ver todos" seleccionado, se muestran todas las frutas sin filtro y el pipeline mantiene el perfil actual.
 
 ## Hitos
 
