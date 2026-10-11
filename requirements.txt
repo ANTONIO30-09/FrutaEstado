@@ -4,6 +4,7 @@ numpy>=1.24.0
 
 # --- Dashboard web ---
 Flask>=3.0.0
+flask-cors>=4.0.0
 
 # --- Cliente HTTP hacia ESP32 ---
 requests>=2.31.0
