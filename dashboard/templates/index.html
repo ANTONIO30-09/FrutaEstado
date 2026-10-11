@@ -4,43 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FrutaEstado — Dashboard</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      margin: 2rem;
-      background: #111;
-      color: #eee;
-    }
-    h1 { color: #4ade80; }
-    #resumen { margin-top: 1rem; font-family: monospace; white-space: pre-wrap; }
-    .aviso {
-      background: #333;
-      padding: 1rem;
-      border-radius: 8px;
-      border-left: 4px solid #facc15;
-      margin: 1rem 0;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-  <h1>FrutaEstado — Dashboard</h1>
-  <div class="aviso">
-    Placeholder. El frontend completo con Chart.js se implementa en la tarea S3.4.
-  </div>
-  <p>Estado de la API: <span id="ping">consultando…</span></p>
-  <div id="resumen"></div>
+  <header>
+    <div>
+      <h1>FrutaEstado</h1>
+      <div class="subtitulo">Clasificador de madurez en tiempo real</div>
+    </div>
+    <div id="estado-conexion">Consultando…</div>
+  </header>
 
-  <script>
-    fetch('/api/resumen')
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('ping').textContent = 'OK';
-        document.getElementById('resumen').textContent =
-          JSON.stringify(data, null, 2);
-      })
-      .catch(err => {
-        document.getElementById('ping').textContent = 'ERROR: ' + err;
-      });
-  </script>
+  <section class="contadores">
+    <div class="contador s"><div class="num" id="contador-s">0</div><div class="lbl">Madura (S)</div></div>
+    <div class="contador a"><div class="num" id="contador-a">0</div><div class="lbl">Inmadura (A)</div></div>
+    <div class="contador r"><div class="num" id="contador-r">0</div><div class="lbl">Pasada (R)</div></div>
+    <div class="contador t"><div class="num" id="contador-total">0</div><div class="lbl">Total</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="panel">
+      <h2>Conteos por estado</h2>
+      <div class="chart-wrap"><canvas id="chart-conteos"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Registros por minuto (última hora)</h2>
+      <div class="chart-wrap"><canvas id="chart-serie"></canvas></div>
+    </div>
+  </section>
+
+  <section class="tabla-wrap">
+    <h2 style="margin:0 0 0.75rem 0;font-size:1rem;color:#cbd5e1;font-weight:500;">
+      Últimos 10 registros
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Estado</th>
+          <th>% Verde</th>
+          <th>% Madura</th>
+          <th>% Pasada</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-ultimos">
+        <tr><td colspan="5" style="text-align:center;color:#64748b;">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>MMI-611 — Ingeniería de Sistemas</footer>
+
+  <script src="/static/js/chart.umd.min.js"></script>
+  <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

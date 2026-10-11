@@ -112,3 +112,33 @@ def test_resumen_con_datos(cliente):
     assert data["ultimos"][0]["estado"] == "A"
     # Serie por minuto tiene al menos una entrada
     assert len(data["serie_por_minuto"]) >= 1
+
+
+# ---------- Estáticos y HTML del dashboard ----------
+
+def test_static_chartjs_devuelve_200(cliente):
+    r = cliente.get("/static/js/chart.umd.min.js")
+    assert r.status_code == 200
+    # Chart.js pesa >100 KB; verificar que se sirvio contenido real.
+    assert len(r.data) > 100_000
+
+
+def test_static_dashboard_js_devuelve_200(cliente):
+    r = cliente.get("/static/js/dashboard.js")
+    assert r.status_code == 200
+    assert b"REFRESH_MS" in r.data
+
+
+def test_static_dashboard_css_devuelve_200(cliente):
+    r = cliente.get("/static/css/dashboard.css")
+    assert r.status_code == 200
+
+
+def test_index_incluye_canvas_y_scripts(cliente):
+    r = cliente.get("/")
+    html = r.data
+    assert b'id="chart-conteos"' in html
+    assert b'id="chart-serie"' in html
+    assert b'id="tbody-ultimos"' in html
+    assert b'chart.umd.min.js' in html
+    assert b'dashboard.js' in html
