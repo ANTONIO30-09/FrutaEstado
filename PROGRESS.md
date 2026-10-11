@@ -39,7 +39,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
   - Madura: H <= 35 o H >= 160, con V >= 110 y S >= 80
   - Pasada: H <= 25 y V < 110
   - Filtro de mayoría sobre los últimos 7 cuadros
-- [ ] Script de envío HTTP al ESP32 (`GET /estado?valor=S|A|R`), heartbeat cada 1 s
+- [x] Script de envío HTTP al ESP32 (`GET /estado?valor=S|A|R`), heartbeat cada 1 s
 - [ ] Registro en dashboard solo cuando cambia el estado
 - [ ] Tests pytest de la función de clasificación HSV con frames de prueba
 

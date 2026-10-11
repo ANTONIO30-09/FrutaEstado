@@ -99,6 +99,23 @@ Muestra la ventana con el rectángulo de la ROI, el estado detectado (S/A/R o `-
 - Pasada (`R`): H <= 25 y V < 110.
 - Filtro de mayoría sobre los últimos 7 cuadros para evitar parpadeos.
 
+### Ejecutar el sistema completo
+
+Con la captura y la clasificación verificadas, se levanta el pipeline completo:
+
+~~~bash
+python -m src.main
+~~~
+
+Esto abre la ventana con la ROI, el estado clasificado en vivo, los porcentajes de píxeles y el estado del enlace con el ESP32 (contadores OK/FAIL y timestamp del último envío exitoso). Se cierra con `q`.
+
+**Comportamiento del heartbeat:**
+
+- El clasificador corre a la velocidad que le permita la cámara.
+- El envío al ESP32 (`GET /estado?valor=S|A|R`) se dispara **exactamente cada 1 segundo**, independientemente de los FPS de captura.
+- Si el ESP32 no responde (apagado, timeout, IP mal configurada), el script **no se cae**: muestra `ESP32: FAIL` en pantalla y sigue clasificando.
+- Si el estado filtrado es `None` (no hay fruta en la ROI), no se envía nada al ESP32 hasta que aparezca una fruta.
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
