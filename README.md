@@ -80,6 +80,25 @@ Esto abre una ventana con los frames en vivo y muestra los FPS en la esquina sup
 
 > **Nota sobre la red en la universidad:** las redes WiFi institucionales suelen aislar a los dispositivos entre sí (AP isolation), por lo que el celular y la laptop no se verán aunque estén "en la misma red". Para la demo se recomienda activar el punto de acceso personal del iPhone y conectar la laptop (y el ESP32) a ese hotspot.
 
+### Probar la clasificación HSV
+
+Una vez verificada la captura, se puede probar el clasificador en vivo:
+
+~~~bash
+python -m src.clasificador
+~~~
+
+Muestra la ventana con el rectángulo de la ROI, el estado detectado (S/A/R o `-`), los porcentajes de píxeles verdes/maduros/pasados y el total de píxeles de fruta. Se cierra con `q`.
+
+**Reglas de clasificación (contrato del proyecto):**
+
+- ROI central: 25% horizontal, 20% vertical, 50% ancho, 60% alto.
+- Filtro de fruta: S >= 50 y V >= 30.
+- Verde (inmadura, `A`): 35 <= H <= 85.
+- Madura (`S`): H <= 35 o H >= 160, con V >= 110 y S >= 80.
+- Pasada (`R`): H <= 25 y V < 110.
+- Filtro de mayoría sobre los últimos 7 cuadros para evitar parpadeos.
+
 ## Hitos
 
 1. **Semana 1** — estructura del repo, `.gitignore`, README, PROGRESS.md ✅
