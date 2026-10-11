@@ -125,13 +125,26 @@ def insertar_registro(
         conn.close()
 
 
-def obtener_conteos_por_estado(db_path: str | Path | None = None) -> dict[str, int]:
-    """Devuelve {S: n, A: n, R: n}. Siempre trae las tres claves."""
+def obtener_conteos_por_estado(
+    db_path: str | Path | None = None,
+    tipo_fruta: str | None = None,
+) -> dict[str, int]:
+    """Devuelve {S: n, A: n, R: n}. Siempre trae las tres claves.
+
+    Si tipo_fruta no es None, filtra por esa fruta.
+    """
     conn = conectar(db_path)
     try:
-        filas = conn.execute(
-            "SELECT estado, COUNT(*) AS n FROM registros GROUP BY estado"
-        ).fetchall()
+        if tipo_fruta is None:
+            filas = conn.execute(
+                "SELECT estado, COUNT(*) AS n FROM registros GROUP BY estado"
+            ).fetchall()
+        else:
+            filas = conn.execute(
+                "SELECT estado, COUNT(*) AS n FROM registros "
+                "WHERE tipo_fruta = ? GROUP BY estado",
+                (tipo_fruta,),
+            ).fetchall()
     finally:
         conn.close()
 
@@ -142,41 +155,76 @@ def obtener_conteos_por_estado(db_path: str | Path | None = None) -> dict[str, i
 
 
 def obtener_serie_por_minuto(
-    minutos: int = 60, db_path: str | Path | None = None
+    minutos: int = 60,
+    db_path: str | Path | None = None,
+    tipo_fruta: str | None = None,
 ) -> list[dict]:
-    """Serie por minuto en la ventana indicada (por defecto, última hora)."""
+    """Serie por minuto en la ventana indicada (por defecto, última hora).
+
+    Si tipo_fruta no es None, filtra por esa fruta.
+    """
     conn = conectar(db_path)
     try:
-        filas = conn.execute(
-            """
-            SELECT
-                strftime('%Y-%m-%d %H:%M', timestamp) AS minuto,
-                estado,
-                COUNT(*) AS conteo
-            FROM registros
-            WHERE timestamp >= datetime('now', 'localtime', ?)
-            GROUP BY minuto, estado
-            ORDER BY minuto ASC
-            """,
-            (f"-{int(minutos)} minutes",),
-        ).fetchall()
+        if tipo_fruta is None:
+            filas = conn.execute(
+                """
+                SELECT
+                    strftime('%Y-%m-%d %H:%M', timestamp) AS minuto,
+                    estado,
+                    COUNT(*) AS conteo
+                FROM registros
+                WHERE timestamp >= datetime('now', 'localtime', ?)
+                GROUP BY minuto, estado
+                ORDER BY minuto ASC
+                """,
+                (f"-{int(minutos)} minutes",),
+            ).fetchall()
+        else:
+            filas = conn.execute(
+                """
+                SELECT
+                    strftime('%Y-%m-%d %H:%M', timestamp) AS minuto,
+                    estado,
+                    COUNT(*) AS conteo
+                FROM registros
+                WHERE timestamp >= datetime('now', 'localtime', ?)
+                  AND tipo_fruta = ?
+                GROUP BY minuto, estado
+                ORDER BY minuto ASC
+                """,
+                (f"-{int(minutos)} minutes", tipo_fruta),
+            ).fetchall()
     finally:
         conn.close()
     return [dict(fila) for fila in filas]
 
 
 def obtener_ultimos_registros(
-    n: int = 10, db_path: str | Path | None = None
+    n: int = 10,
+    db_path: str | Path | None = None,
+    tipo_fruta: str | None = None,
 ) -> list[dict]:
-    """Devuelve las últimas N filas ordenadas por timestamp descendente."""
+    """Devuelve las últimas N filas ordenadas por timestamp descendente.
+
+    Si tipo_fruta no es None, filtra por esa fruta.
+    """
     conn = conectar(db_path)
     try:
-        filas = conn.execute(
-            "SELECT id, estado, pct_verde, pct_madura, pct_pasada, "
-            "tipo_fruta, timestamp "
-            "FROM registros ORDER BY timestamp DESC, id DESC LIMIT ?",
-            (int(n),),
-        ).fetchall()
+        if tipo_fruta is None:
+            filas = conn.execute(
+                "SELECT id, estado, pct_verde, pct_madura, pct_pasada, "
+                "tipo_fruta, timestamp "
+                "FROM registros ORDER BY timestamp DESC, id DESC LIMIT ?",
+                (int(n),),
+            ).fetchall()
+        else:
+            filas = conn.execute(
+                "SELECT id, estado, pct_verde, pct_madura, pct_pasada, "
+                "tipo_fruta, timestamp "
+                "FROM registros WHERE tipo_fruta = ? "
+                "ORDER BY timestamp DESC, id DESC LIMIT ?",
+                (tipo_fruta, int(n)),
+            ).fetchall()
     finally:
         conn.close()
     return [dict(fila) for fila in filas]

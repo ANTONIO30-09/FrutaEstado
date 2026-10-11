@@ -12,7 +12,20 @@
       <h1>FrutaEstado</h1>
       <div class="subtitulo">Clasificador de madurez en tiempo real</div>
     </div>
-    <div id="estado-conexion">Consultando…</div>
+    <div class="controles">
+      <label for="selector-fruta">Fruta:</label>
+      <select id="selector-fruta">
+        <option value="">Ver todos</option>
+        <option value="default">Genérico (default)</option>
+        <option value="platano">Plátano</option>
+        <option value="mandarina">Mandarina</option>
+        <option value="manzana_verde">Manzana verde</option>
+        <option value="manzana_roja">Manzana roja</option>
+        <option value="uva_verde">Uva verde</option>
+        <option value="uva_morada">Uva morada</option>
+      </select>
+      <div id="estado-conexion">Consultando…</div>
+    </div>
   </header>
 
   <section class="contadores">
@@ -42,6 +55,7 @@
         <tr>
           <th>Hora</th>
           <th>Estado</th>
+          <th>Fruta</th>
           <th>% Verde</th>
           <th>% Madura</th>
           <th>% Pasada</th>

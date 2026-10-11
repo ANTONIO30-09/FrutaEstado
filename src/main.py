@@ -22,12 +22,13 @@ from src.clasificador import (
     ResultadoClasificacion,
     clasificar_frame,
 )
-from src.cliente_dashboard import enviar_registro
+from src.cliente_dashboard import enviar_registro, obtener_perfil_actual
 from src.perfiles_frutas import PerfilFruta, obtener_perfil
 from src.cliente_esp32 import enviar_estado
 from src.config import Config, cargar_config
 
 INTERVALO_HEARTBEAT_S = 1.0
+INTERVALO_POLLING_PERFIL_S = 2.0
 
 COLORES = {"S": (0, 0, 255), "A": (0, 255, 0), "R": (0, 165, 255)}
 
@@ -129,6 +130,7 @@ def _loop(cfg: Config) -> int:
 
     perfil: PerfilFruta = obtener_perfil(cfg.perfil_fruta)
     filtro = FiltroMayoria(perfil.ventana_mayoria)
+    ultimo_polling_perfil_monotonic = 0.0
     esp_ok = 0
     esp_fail = 0
     dash_ok = 0
@@ -157,6 +159,18 @@ def _loop(cfg: Config) -> int:
             if frame is not None:
                 resultado = clasificar_frame(frame, perfil)
                 estado_filtrado = filtro.actualizar(resultado.estado)
+
+            # Polling del perfil activo al dashboard cada INTERVALO_POLLING_PERFIL_S.
+            # Si el operador cambió de fruta desde el navegador, se aplica
+            # en caliente sin reiniciar el script.
+            if (ahora_monotonic - ultimo_polling_perfil_monotonic) >= INTERVALO_POLLING_PERFIL_S:
+                nuevo_nombre = obtener_perfil_actual(cfg.flask_host, cfg.flask_port)
+                if nuevo_nombre is not None and nuevo_nombre != perfil.nombre:
+                    perfil = obtener_perfil(nuevo_nombre)
+                    filtro = FiltroMayoria(perfil.ventana_mayoria)
+                    estado_anterior = None
+                    print(f"[INFO] Perfil cambiado a: {perfil.nombre}")
+                ultimo_polling_perfil_monotonic = ahora_monotonic
 
             # Heartbeat al ESP32 exactamente cada INTERVALO_HEARTBEAT_S
             if (

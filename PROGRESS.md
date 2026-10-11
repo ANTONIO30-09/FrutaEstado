@@ -54,10 +54,16 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Perfiles HSV por fruta (`src/perfiles_frutas.py`) con soporte para agregar frutas via JSON
 - [x] 6 perfiles calibrados desde tablas HSV publicas (`config/perfiles_custom.json`)
 - [x] Reorden del clasificador: pasada -> verde -> madura
+- [x] Selector de fruta en el dashboard con hot-swap del perfil en el pipeline
+- [x] API: endpoints `/api/perfil` (GET/POST) y `/api/perfiles`
+- [x] Filtro por `tipo_fruta` en `/api/resumen`
 - [x] Columna `tipo_fruta` en `registros` con migracion idempotente
 - [x] Perfiles HSV por fruta (`src/perfiles_frutas.py`) con soporte para agregar frutas via JSON
 - [x] 6 perfiles calibrados desde tablas HSV publicas (`config/perfiles_custom.json`)
 - [x] Reorden del clasificador: pasada -> verde -> madura
+- [x] Selector de fruta en el dashboard con hot-swap del perfil en el pipeline
+- [x] API: endpoints `/api/perfil` (GET/POST) y `/api/perfiles`
+- [x] Filtro por `tipo_fruta` en `/api/resumen`
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)
 - [ ] Pruebas de precisión con frutas reales — ajustar umbrales HSV si hace falta
 

@@ -140,3 +140,37 @@ footer {
   .grid { grid-template-columns: 1fr; }
   header h1 { font-size: 1.4rem; }
 }
+
+
+/* --- Selector de fruta (S4.4) --- */
+.controles {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.controles label {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+#selector-fruta {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#selector-fruta:hover {
+  border-color: #4ade80;
+}
+
+#selector-fruta:focus {
+  outline: none;
+  border-color: #4ade80;
+}

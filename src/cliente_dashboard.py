@@ -62,3 +62,33 @@ def enviar_registro(
         return False
 
     return respuesta.status_code == 201
+
+
+def obtener_perfil_actual(
+    host: str,
+    port: int,
+    timeout: float = TIMEOUT_POR_DEFECTO,
+) -> str | None:
+    """Consulta GET /api/perfil al dashboard y devuelve el perfil activo.
+
+    Devuelve None si el dashboard no responde, hay timeout o la respuesta
+    no tiene el formato esperado. Nunca lanza.
+    """
+    host = _resolver_host(host)
+    url = f"http://{host}:{port}/api/perfil"
+    try:
+        respuesta = requests.get(url, timeout=timeout)
+    except requests.RequestException:
+        return None
+    if respuesta.status_code != 200:
+        return None
+    try:
+        datos = respuesta.json()
+    except ValueError:
+        return None
+    if not isinstance(datos, dict):
+        return None
+    perfil = datos.get("perfil")
+    if isinstance(perfil, str) and perfil.strip():
+        return perfil.strip()
+    return None
