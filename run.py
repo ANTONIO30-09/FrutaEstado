@@ -15,7 +15,7 @@ def main() -> None:
         f"Dashboard escuchando en http://{cfg.flask_host}:{cfg.flask_port}/ "
         f"(abrir en el navegador)"
     )
-    app.run(host=cfg.flask_host, port=cfg.flask_port, debug=True)
+    app.run(host=cfg.flask_host, port=cfg.flask_port, debug=False, use_reloader=False)
 
 
 if __name__ == "__main__":

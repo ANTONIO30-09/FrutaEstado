@@ -4,19 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FrutaEstado — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-  <header>
-    <div>
+
+  <header class="topbar">
+    <div class="brand">
       <h1>FrutaEstado</h1>
       <div class="subtitulo">Clasificador de madurez en tiempo real</div>
     </div>
-    <div class="controles">
-      <label for="selector-fruta">Fruta:</label>
+    <div class="controls">
+      <label for="selector-fruta">Fruta</label>
       <select id="selector-fruta">
         <option value="">Ver todos</option>
-        <option value="default">Genérico (default)</option>
         <option value="platano">Plátano</option>
         <option value="mandarina">Mandarina</option>
         <option value="manzana_verde">Manzana verde</option>
@@ -24,32 +27,72 @@
         <option value="uva_verde">Uva verde</option>
         <option value="uva_morada">Uva morada</option>
       </select>
-      <div id="estado-conexion">Consultando…</div>
+      <div id="estado-conexion" class="status-pill">Consultando…</div>
     </div>
   </header>
 
-  <section class="contadores">
-    <div class="contador s"><div class="num" id="contador-s">0</div><div class="lbl">Madura (S)</div></div>
-    <div class="contador a"><div class="num" id="contador-a">0</div><div class="lbl">Inmadura (A)</div></div>
-    <div class="contador r"><div class="num" id="contador-r">0</div><div class="lbl">Pasada (R)</div></div>
-    <div class="contador t"><div class="num" id="contador-total">0</div><div class="lbl">Total</div></div>
-  </section>
+  <main class="layout">
 
-  <section class="grid">
-    <div class="panel">
-      <h2>Conteos por estado</h2>
-      <div class="chart-wrap"><canvas id="chart-conteos"></canvas></div>
-    </div>
-    <div class="panel">
+    <!-- Panel izquierdo: contadores por estado -->
+    <aside class="left-panel glass">
+      <h2>Resumen</h2>
+      <div class="stat-row">
+        <div class="label"><span class="dot s"></span>Madura</div>
+        <div class="val" id="contador-s">0</div>
+      </div>
+      <div class="stat-row">
+        <div class="label"><span class="dot a"></span>Inmadura</div>
+        <div class="val" id="contador-a">0</div>
+      </div>
+      <div class="stat-row">
+        <div class="label"><span class="dot r"></span>Pasada</div>
+        <div class="val" id="contador-r">0</div>
+      </div>
+      <div class="total-card">
+        <div class="lbl">Total</div>
+        <div class="val" id="contador-total">0</div>
+      </div>
+    </aside>
+
+    <!-- Panel central: fruta con gauge circular -->
+    <section class="center-panel">
+      <div class="fruit-wrapper">
+        <svg class="gauge-svg" viewBox="0 0 200 200">
+          <circle class="track" cx="100" cy="100" r="92"/>
+          <circle id="arc-s" class="arc arc-s" cx="100" cy="100" r="92"
+                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
+          <circle id="arc-a" class="arc arc-a" cx="100" cy="100" r="92"
+                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
+          <circle id="arc-r" class="arc arc-r" cx="100" cy="100" r="92"
+                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
+        </svg>
+
+        <div class="fruit-img" id="fruit-img">
+          <!-- El JS inyecta aqui el SVG segun la fruta seleccionada -->
+        </div>
+      </div>
+      <div class="estado-actual" id="estado-actual">
+        Estado actual: <strong>—</strong>
+      </div>
+    </section>
+
+    <!-- Panel derecho: gráfica por minuto -->
+    <aside class="right-panel glass">
       <h2>Registros por minuto (última hora)</h2>
       <div class="chart-wrap"><canvas id="chart-serie"></canvas></div>
-    </div>
-  </section>
+    </aside>
 
-  <section class="tabla-wrap">
-    <h2 style="margin:0 0 0.75rem 0;font-size:1rem;color:#cbd5e1;font-weight:500;">
-      Últimos 10 registros
-    </h2>
+  </main>
+
+  <!-- Botón flotante -->
+  <button class="btn-registros" id="btn-registros">
+    Últimos registros
+    <span class="arrow">▲</span>
+  </button>
+
+  <!-- Panel flotante de registros -->
+  <div class="floating-panel" id="floating-panel">
+    <h2>Últimos 10 registros</h2>
     <table>
       <thead>
         <tr>
@@ -62,14 +105,13 @@
         </tr>
       </thead>
       <tbody id="tbody-ultimos">
-        <tr><td colspan="5" style="text-align:center;color:#64748b;">Cargando…</td></tr>
+        <tr><td colspan="6" style="text-align:center;opacity:0.6;">Cargando…</td></tr>
       </tbody>
     </table>
-  </section>
-
-  <footer>MMI-611 — Ingeniería de Sistemas</footer>
+  </div>
 
   <script src="/static/js/chart.umd.min.js"></script>
+  <script src="/static/js/frutas.js"></script>
   <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

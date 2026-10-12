@@ -153,4 +153,4 @@ if __name__ == "__main__":
     from src.config import cargar_config
 
     cfg = cargar_config()
-    crear_app().run(host=cfg.flask_host, port=cfg.flask_port, debug=True)
+    crear_app().run(host=cfg.flask_host, port=cfg.flask_port, debug=False, use_reloader=False)
