@@ -2,7 +2,7 @@
 
 Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de trabajo.
 
-**Última actualización:** Sesión de rediseño visual del dashboard cerrada — listo para integrar a `dev`
+**Última actualización:** Fix del botón "Últimos registros" (movido al header + chevron de cierre + panel glass compacto)
 
 ---
 
@@ -48,7 +48,7 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Filtro por `tipo_fruta` en `/api/resumen`
 - [x] Mock del ESP32 (`tools/mock_esp32.py`) para desarrollo sin hardware
 
-### Semana 5 — Rediseño visual y cierre UI (rama `feat/rediseno-visual`)
+### Semana 5 — Rediseño visual y cierre UI
 - [x] Rediseño completo del dashboard con estética "glass" (blur + transparencias)
 - [x] Fondo fotográfico de pasto cargado por URL externa
 - [x] Layout grid full-height con paneles estirados (resumen izquierda, gráfica derecha)
@@ -61,6 +61,14 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Polling del perfil activo cada 2 s para hot-swap sin reiniciar `src/main.py`
 - [x] Flask con `debug=False` + `use_reloader=False` en `app.py` y `run.py`
 - [x] 134 tests pasando tras el rediseño
+
+### Semana 5 — Fix UX del panel de registros (rama `fix/posicion-boton-registros`)
+- [x] Botón "Últimos registros" movido del body al header (junto al selector de fruta)
+- [x] Chevron de cierre (▼) agregado dentro del panel
+- [x] Cierre con tecla Escape como atajo de UX
+- [x] Panel de registros más compacto (~45vh) con glass real y scroll visible
+- [x] Corregido el solapamiento con la gráfica por minuto
+- [x] 134 tests pasando tras el fix
 
 ### Pendiente (Semana 5 — Cierre)
 - [ ] Prueba end-to-end con ESP32 real (compañero de hardware)

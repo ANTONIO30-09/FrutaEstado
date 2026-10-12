@@ -227,10 +227,29 @@ async function onSelectorChange(ev) {
 function initBotonRegistros() {
   const btn = document.getElementById("btn-registros");
   const panel = document.getElementById("floating-panel");
+  const btnCerrar = document.getElementById("btn-cerrar-panel");
   if (!btn || !panel) return;
+
+  // Toggle desde el boton del header
   btn.addEventListener("click", () => {
     panel.classList.toggle("open");
     btn.classList.toggle("open");
+  });
+
+  // Cerrar desde el chevron dentro del panel
+  if (btnCerrar) {
+    btnCerrar.addEventListener("click", () => {
+      panel.classList.remove("open");
+      btn.classList.remove("open");
+    });
+  }
+
+  // Cerrar tambien con la tecla Escape (bonus de UX)
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && panel.classList.contains("open")) {
+      panel.classList.remove("open");
+      btn.classList.remove("open");
+    }
   });
 }
 
