@@ -134,12 +134,21 @@ def test_static_dashboard_css_devuelve_200(cliente):
     assert r.status_code == 200
 
 
-def test_index_incluye_canvas_y_scripts(cliente):
+def test_index_incluye_elementos_clave(cliente):
+    """El rediseno glass reemplazo el doughnut por un gauge SVG."""
     r = cliente.get("/")
     html = r.data
-    assert b'id="chart-conteos"' in html
+    # Gauge SVG (los 3 arcos)
+    assert b'id="arc-s"' in html
+    assert b'id="arc-a"' in html
+    assert b'id="arc-r"' in html
+    # Grafica de linea
     assert b'id="chart-serie"' in html
+    # Tabla del panel flotante
     assert b'id="tbody-ultimos"' in html
+    # Boton flotante
+    assert b'id="btn-registros"' in html
+    # Scripts
     assert b'chart.umd.min.js' in html
     assert b'dashboard.js' in html
 
