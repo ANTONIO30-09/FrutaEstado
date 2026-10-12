@@ -27,7 +27,7 @@ def test_enviar_estado_200_devuelve_true():
         args, kwargs = m.call_args
         assert args[0] == "http://1.2.3.4:80/estado"
         assert kwargs["params"] == {"valor": "S"}
-        assert kwargs["timeout"] == 1.0
+        assert kwargs["timeout"] == 1.5
 
 
 def test_enviar_estado_400_devuelve_false():

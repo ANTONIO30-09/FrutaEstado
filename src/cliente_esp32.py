@@ -17,7 +17,7 @@ from __future__ import annotations
 import requests
 
 VALORES_VALIDOS = frozenset({"S", "A", "R"})
-TIMEOUT_POR_DEFECTO = 1.0
+TIMEOUT_POR_DEFECTO = 1.5
 
 
 def _construir_url(ip: str, port: int, endpoint: str) -> str:

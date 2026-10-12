@@ -2,7 +2,7 @@
 
 Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de trabajo.
 
-**Última actualización:** Fix del botón "Últimos registros" (movido al header + chevron de cierre + panel glass compacto)
+**Última actualización:** Alineación del pipeline con LEDs del ESP32 (colores) + timeout subido a 1.5s
 
 ---
 
@@ -68,6 +68,12 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 - [x] Cierre con tecla Escape como atajo de UX
 - [x] Panel de registros más compacto (~45vh) con glass real y scroll visible
 - [x] Corregido el solapamiento con la gráfica por minuto
+- [x] 134 tests pasando tras el fix
+
+### Semana 5 — Alineación con hardware real (rama `fix/alinear-colores-y-timeout-hardware`)
+- [x] Colores del overlay alineados con LEDs del ESP32 (S→verde, A→amarillo, R→rojo)
+- [x] Timeout del cliente HTTP subido de 1.0s a 1.5s (WiFi de la U saturada)
+- [x] Test `test_enviar_estado_200_devuelve_true` actualizado
 - [x] 134 tests pasando tras el fix
 
 ### Pendiente (Semana 5 — Cierre)
