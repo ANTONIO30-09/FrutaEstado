@@ -27,6 +27,10 @@
         <option value="uva_verde">Uva verde</option>
         <option value="uva_morada">Uva morada</option>
       </select>
+      <button class="btn-registros" id="btn-registros">
+        Últimos registros
+        <span class="arrow">▲</span>
+      </button>
       <div id="estado-conexion" class="status-pill">Consultando…</div>
     </div>
   </header>
@@ -84,15 +88,14 @@
 
   </main>
 
-  <!-- Botón flotante -->
-  <button class="btn-registros" id="btn-registros">
-    Últimos registros
-    <span class="arrow">▲</span>
-  </button>
-
   <!-- Panel flotante de registros -->
   <div class="floating-panel" id="floating-panel">
-    <h2>Últimos 10 registros</h2>
+    <div class="panel-header">
+      <h2>Últimos 10 registros</h2>
+      <button class="btn-cerrar-panel" id="btn-cerrar-panel" aria-label="Cerrar panel">
+        <span class="chevron">▼</span>
+      </button>
+    </div>
     <table>
       <thead>
         <tr>
