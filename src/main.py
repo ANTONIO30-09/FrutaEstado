@@ -30,7 +30,7 @@ from src.config import Config, cargar_config
 INTERVALO_HEARTBEAT_S = 1.0
 INTERVALO_POLLING_PERFIL_S = 2.0
 
-COLORES = {"S": (0, 0, 255), "A": (0, 255, 0), "R": (0, 165, 255)}
+COLORES = {"S": (0, 200, 0), "A": (0, 200, 255), "R": (0, 0, 255)}
 
 
 def _dibujar_overlay(
