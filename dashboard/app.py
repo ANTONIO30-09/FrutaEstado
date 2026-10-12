@@ -16,6 +16,12 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
+from src.perfiles_frutas import PERFILES
+
+from dashboard.estado_compartido import (
+    get_perfil as get_perfil_activo,
+    set_perfil as set_perfil_activo,
+)
 from dashboard.db import (
     ESTADOS_VALIDOS,
     init_db,
@@ -75,11 +81,14 @@ def crear_app(db_path: str | None = None) -> Flask:
                     400,
                 )
 
+        tipo_fruta = str(datos.get("tipo_fruta", "desconocida")).strip() or "desconocida"
+
         nuevo_id = insertar_registro(
             estado=estado,
             pct_verde=porcentajes["pct_verde"],
             pct_madura=porcentajes["pct_madura"],
             pct_pasada=porcentajes["pct_pasada"],
+            tipo_fruta=tipo_fruta,
             db_path=db_path,
         )
         return jsonify({"id": nuevo_id}), 201
@@ -87,15 +96,55 @@ def crear_app(db_path: str | None = None) -> Flask:
     # ---------- GET /api/resumen ----------
     @app.get("/api/resumen")
     def api_resumen():
+        # ?tipo_fruta=platano filtra; ausente o vacio = sin filtro.
+        tipo_fruta = request.args.get("tipo_fruta", "").strip() or None
         return jsonify(
             {
-                "conteos": obtener_conteos_por_estado(db_path=db_path),
-                "serie_por_minuto": obtener_serie_por_minuto(
-                    minutos=60, db_path=db_path
+                "conteos": obtener_conteos_por_estado(
+                    db_path=db_path, tipo_fruta=tipo_fruta
                 ),
-                "ultimos": obtener_ultimos_registros(n=10, db_path=db_path),
+                "serie_por_minuto": obtener_serie_por_minuto(
+                    minutos=60, db_path=db_path, tipo_fruta=tipo_fruta
+                ),
+                "ultimos": obtener_ultimos_registros(
+                    n=10, db_path=db_path, tipo_fruta=tipo_fruta
+                ),
+                "tipo_fruta": tipo_fruta,
             }
         )
+
+    # ---------- GET /api/perfil ----------
+    @app.get("/api/perfil")
+    def api_perfil_get():
+        return jsonify({"perfil": get_perfil_activo()})
+
+    # ---------- POST /api/perfil ----------
+    @app.post("/api/perfil")
+    def api_perfil_post():
+        datos = request.get_json(silent=True)
+        if not isinstance(datos, dict):
+            return jsonify({"error": "Se esperaba un JSON."}), 400
+        nombre = datos.get("perfil")
+        if not isinstance(nombre, str) or not nombre.strip():
+            return jsonify({"error": "Falta el campo 'perfil'."}), 400
+        nombre = nombre.strip()
+        if nombre not in PERFILES:
+            return (
+                jsonify(
+                    {
+                        "error": f"Perfil desconocido: {nombre!r}.",
+                        "disponibles": sorted(PERFILES.keys()),
+                    }
+                ),
+                400,
+            )
+        set_perfil_activo(nombre)
+        return jsonify({"perfil": nombre}), 200
+
+    # ---------- GET /api/perfiles ----------
+    @app.get("/api/perfiles")
+    def api_perfiles_list():
+        return jsonify({"perfiles": sorted(PERFILES.keys())})
 
     return app
 
@@ -104,4 +153,4 @@ if __name__ == "__main__":
     from src.config import cargar_config
 
     cfg = cargar_config()
-    crear_app().run(host=cfg.flask_host, port=cfg.flask_port, debug=True)
+    crear_app().run(host=cfg.flask_host, port=cfg.flask_port, debug=False, use_reloader=False)

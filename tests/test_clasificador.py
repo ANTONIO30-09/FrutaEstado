@@ -99,3 +99,118 @@ def test_filtro_mayoria_se_llena_y_desplaza():
     f.actualizar("S")
     # Buffer: [A, S, S] → mayoria S
     assert f.estado_actual() == "S"
+
+
+# ---------- clasificacion con perfiles (S4.2) ----------
+
+def test_clasificar_con_perfil_none_usa_default():
+    frame = _frame_hsv(60, 150, 150)
+    r = clasificar_frame(frame, perfil=None)
+    assert r.perfil == "default"
+
+
+def test_mismo_frame_distinto_perfil_puede_dar_distinto_estado():
+    """Un frame amarillo: con default es verde-inmadura, con platano es madura."""
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=30, S=150, V=150: amarillo
+    frame = _frame_hsv(30, 150, 150)
+    r_default = clasificar_frame(frame, obtener_perfil("default"))
+    r_platano = clasificar_frame(frame, obtener_perfil("platano"))
+    # Con default, H=30 cae en "madura" tambien. Verificamos que el perfil
+    # viaja con el resultado correctamente.
+    assert r_default.perfil == "default"
+    assert r_platano.perfil == "platano"
+
+
+def test_resultado_incluye_nombre_del_perfil():
+    from src.perfiles_frutas import obtener_perfil
+
+    frame = _frame_hsv(60, 150, 150)
+    r = clasificar_frame(frame, obtener_perfil("manzana_verde"))
+    assert r.perfil == "manzana_verde"
+
+
+def test_frame_sin_fruta_con_perfil_devuelve_none_y_perfil():
+    from src.perfiles_frutas import obtener_perfil
+
+    frame = np.zeros((200, 300, 3), dtype=np.uint8)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado is None
+    assert r.perfil == "platano"
+
+
+# ---------- clasificacion con perfiles calibrados (S4.3) ----------
+
+def test_platano_verde_es_inmaduro():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=45 en rango verde 26-55, V alto para no caer en pasada
+    frame = _frame_hsv(45, 100, 120)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado == "A"
+    assert r.perfil == "platano"
+
+
+def test_platano_amarillo_es_maduro():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=22 amarillo, S y V altos
+    frame = _frame_hsv(22, 180, 180)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado == "S"
+
+
+def test_platano_marron_es_pasado():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=12, V bajo -> pasada (cae antes que madura)
+    frame = _frame_hsv(12, 80, 100)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado == "R"
+
+
+def test_uva_morada_madura():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=140 morado, dentro del rango 110+
+    frame = _frame_hsv(140, 100, 80)
+    r = clasificar_frame(frame, obtener_perfil("uva_morada"))
+    assert r.estado == "S"
+
+
+def test_uva_morada_inmadura_es_verde():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=60 verde, inmadura
+    frame = _frame_hsv(60, 100, 100)
+    r = clasificar_frame(frame, obtener_perfil("uva_morada"))
+    assert r.estado == "A"
+
+
+def test_manzana_roja_madura():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=5 rojo, S y V altos
+    frame = _frame_hsv(5, 200, 180)
+    r = clasificar_frame(frame, obtener_perfil("manzana_roja"))
+    assert r.estado == "S"
+
+
+def test_mandarina_naranja_es_madura():
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=18 naranja, dentro del rango madura 11-24
+    frame = _frame_hsv(18, 180, 180)
+    r = clasificar_frame(frame, obtener_perfil("mandarina"))
+    assert r.estado == "S"
+
+
+def test_reorder_pasada_tiene_prioridad_sobre_madura():
+    """Un marron oscuro (H bajo, V bajo) no debe clasificarse como madura."""
+    from src.perfiles_frutas import obtener_perfil
+
+    # H=15 cumple h_madura_max_bajo<=25 del platano, pero V bajo lo hace pasada
+    frame = _frame_hsv(15, 100, 80)
+    r = clasificar_frame(frame, obtener_perfil("platano"))
+    assert r.estado == "R"

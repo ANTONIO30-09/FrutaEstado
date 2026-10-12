@@ -1,14 +1,9 @@
-"""Clasificación HSV de madurez de frutas.
+"""Clasificacion HSV de madurez de frutas con perfiles por tipo.
 
-Reglas definidas en el contrato del proyecto (NO cambiar sin justificar):
-- ROI central (25%, 20%, 50%, 60% relativos).
-- Filtro de fruta: S >= 50 y V >= 30.
-- Verde (inmadura): 35 <= H <= 85.
-- Madura: H <= 35 o H >= 160, con V >= 110 y S >= 80.
-- Pasada: H <= 25 y V < 110.
-- Filtro de mayoría sobre los últimos 7 cuadros.
-
-OpenCV usa H en rango 0-179, S y V en rango 0-255.
+Acepta un `PerfilFruta` opcional. Si no se pasa, usa el perfil `default`,
+que reproduce EXACTAMENTE el contrato original del proyecto (mismos umbrales,
+misma ROI, misma ventana de mayoria). Por eso los tests anteriores siguen
+pasando sin cambios.
 """
 
 from __future__ import annotations
@@ -22,30 +17,9 @@ import numpy as np
 
 from src.captura import CapturaVideo
 from src.config import Config, cargar_config
+from src.perfiles_frutas import PerfilFruta, obtener_perfil
 
-# --- ROI central: (x_rel, y_rel, ancho_rel, alto_rel) ---
-ROI_REL = (0.25, 0.20, 0.50, 0.60)
-
-# --- Filtro de fruta ---
-S_MIN_FRUTA = 50
-V_MIN_FRUTA = 30
-
-# --- Verde (inmadura) ---
-H_VERDE_MIN = 35
-H_VERDE_MAX = 85
-
-# --- Madura ---
-H_MADURA_MAX_BAJO = 35
-H_MADURA_MIN_ALTO = 160
-V_MADURA_MIN = 110
-S_MADURA_MIN = 80
-
-# --- Pasada ---
-H_PASADA_MAX = 25
-V_PASADA_MAX = 110
-
-# --- Filtro de mayoría ---
-VENTANA_MAYORIA = 7
+VENTANA_MAYORIA_DEFAULT = 7
 
 
 @dataclass(frozen=True)
@@ -53,7 +27,8 @@ class ResultadoClasificacion:
     """Resultado de clasificar un frame.
 
     estado: 'S' (madura), 'A' (inmadura), 'R' (pasada) o None si no hay fruta.
-    Los porcentajes están normalizados sobre los píxeles clasificados.
+    Los porcentajes estan normalizados sobre los pixeles clasificados.
+    perfil: nombre del perfil usado.
     """
 
     estado: str | None
@@ -61,59 +36,67 @@ class ResultadoClasificacion:
     pct_madura: float
     pct_pasada: float
     pixeles_fruta: int
+    perfil: str = "default"
 
 
-def _extraer_roi(frame: np.ndarray) -> tuple[np.ndarray, tuple[int, int, int, int]]:
-    """Recorta la ROI central del frame.
-
-    Devuelve (roi, (x0, y0, x1, y1)) para poder dibujar el rectángulo luego.
-    """
+def _extraer_roi(
+    frame: np.ndarray, perfil: PerfilFruta
+) -> tuple[np.ndarray, tuple[int, int, int, int]]:
+    """Recorta la ROI definida por el perfil. Devuelve (roi, (x0,y0,x1,y1))."""
     alto, ancho = frame.shape[:2]
-    x_rel, y_rel, w_rel, h_rel = ROI_REL
-    x0 = int(ancho * x_rel)
-    y0 = int(alto * y_rel)
-    x1 = x0 + int(ancho * w_rel)
-    y1 = y0 + int(alto * h_rel)
+    x0 = int(ancho * perfil.roi_x_rel)
+    y0 = int(alto * perfil.roi_y_rel)
+    x1 = x0 + int(ancho * perfil.roi_w_rel)
+    y1 = y0 + int(alto * perfil.roi_h_rel)
     return frame[y0:y1, x0:x1], (x0, y0, x1, y1)
 
 
-def clasificar_frame(frame: np.ndarray) -> ResultadoClasificacion:
-    """Clasifica un frame BGR y devuelve el resultado por mayoría de píxeles."""
-    roi, _ = _extraer_roi(frame)
+def clasificar_frame(
+    frame: np.ndarray, perfil: PerfilFruta | None = None
+) -> ResultadoClasificacion:
+    """Clasifica un frame BGR segun el perfil indicado.
+
+    Si perfil es None, usa el perfil 'default' (contrato original).
+    """
+    if perfil is None:
+        perfil = obtener_perfil(None)
+
+    roi, _ = _extraer_roi(frame, perfil)
     hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
     h = hsv[:, :, 0].astype(np.int16)
     s = hsv[:, :, 1].astype(np.int16)
     v = hsv[:, :, 2].astype(np.int16)
 
-    mascara_fruta = (s >= S_MIN_FRUTA) & (v >= V_MIN_FRUTA)
+    mascara_fruta = (s >= perfil.s_min_fruta) & (v >= perfil.v_min_fruta)
     total_fruta = int(mascara_fruta.sum())
 
     if total_fruta == 0:
-        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0)
+        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0, perfil.nombre)
 
-    # Madura (primero: es la condición más específica y con más restricciones)
-    es_madura = (
-        ((h <= H_MADURA_MAX_BAJO) | (h >= H_MADURA_MIN_ALTO))
-        & (v >= V_MADURA_MIN)
-        & (s >= S_MADURA_MIN)
-        & mascara_fruta
-    )
-
-    # Verde (excluyente con madura)
-    es_verde = (
-        (h >= H_VERDE_MIN)
-        & (h <= H_VERDE_MAX)
-        & mascara_fruta
-        & ~es_madura
-    )
-
-    # Pasada (excluyente con las anteriores)
+    # Orden: pasada -> verde -> madura.
+    # Razon: en algunos perfiles (platano, mandarina) el H bajo puede ser
+    # marron (pasada) o amarillo (madura). Hay que excluir pasada primero
+    # para que un platano marron oscuro no caiga en "madura".
     es_pasada = (
-        (h <= H_PASADA_MAX)
-        & (v < V_PASADA_MAX)
+        (h <= perfil.h_pasada_max)
+        & (v < perfil.v_pasada_max)
         & mascara_fruta
-        & ~es_madura
+    )
+
+    es_verde = (
+        (h >= perfil.h_verde_min)
+        & (h <= perfil.h_verde_max)
+        & mascara_fruta
+        & ~es_pasada
+    )
+
+    es_madura = (
+        ((h <= perfil.h_madura_max_bajo) | (h >= perfil.h_madura_min_alto))
+        & (v >= perfil.v_madura_min)
+        & (s >= perfil.s_madura_min)
+        & mascara_fruta
+        & ~es_pasada
         & ~es_verde
     )
 
@@ -123,13 +106,14 @@ def clasificar_frame(frame: np.ndarray) -> ResultadoClasificacion:
     total_clasificado = n_verde + n_madura + n_pasada
 
     if total_clasificado == 0:
-        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, total_fruta)
+        return ResultadoClasificacion(
+            None, 0.0, 0.0, 0.0, total_fruta, perfil.nombre
+        )
 
     pct_verde = 100.0 * n_verde / total_clasificado
     pct_madura = 100.0 * n_madura / total_clasificado
     pct_pasada = 100.0 * n_pasada / total_clasificado
 
-    # Estado por mayoría. Empates: prioriza S, luego A, luego R.
     if n_madura >= n_verde and n_madura >= n_pasada:
         estado = "S"
     elif n_verde >= n_pasada:
@@ -138,19 +122,19 @@ def clasificar_frame(frame: np.ndarray) -> ResultadoClasificacion:
         estado = "R"
 
     return ResultadoClasificacion(
-        estado, pct_verde, pct_madura, pct_pasada, total_fruta
+        estado, pct_verde, pct_madura, pct_pasada, total_fruta, perfil.nombre
     )
 
 
 class FiltroMayoria:
-    """Suaviza el estado entre frames usando los últimos N resultados.
+    """Suaviza el estado entre frames usando los ultimos N resultados.
 
     Los valores None (sin fruta) se ignoran y no entran al buffer.
     """
 
-    def __init__(self, ventana: int = VENTANA_MAYORIA):
-        self.ventana = ventana
-        self._buffer: deque[str] = deque(maxlen=ventana)
+    def __init__(self, ventana: int | None = None):
+        self.ventana = ventana or VENTANA_MAYORIA_DEFAULT
+        self._buffer: deque[str] = deque(maxlen=self.ventana)
 
     def actualizar(self, estado: str | None) -> str | None:
         if estado is not None:
@@ -168,9 +152,12 @@ class FiltroMayoria:
 
 
 def _dibujar_overlay(
-    frame: np.ndarray, resultado: ResultadoClasificacion, estado_filtrado: str | None
+    frame: np.ndarray,
+    resultado: ResultadoClasificacion,
+    estado_filtrado: str | None,
+    perfil: PerfilFruta,
 ) -> None:
-    _, (x0, y0, x1, y1) = _extraer_roi(frame)
+    _, (x0, y0, x1, y1) = _extraer_roi(frame, perfil)
     cv2.rectangle(frame, (x0, y0), (x1, y1), (255, 255, 0), 2)
 
     colores = {"S": (0, 0, 255), "A": (0, 255, 0), "R": (0, 165, 255)}
@@ -206,10 +193,20 @@ def _dibujar_overlay(
         (200, 200, 200),
         1,
     )
+    cv2.putText(
+        frame,
+        f"Perfil: {perfil.nombre}",
+        (10, 125),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.5,
+        (100, 200, 255),
+        1,
+    )
 
 
 def _demo(config: Config) -> int:
-    """Demo: muestra la webcam/stream con el estado clasificado en pantalla."""
+    """Demo: clasifica con el perfil configurado en .env."""
+    perfil = obtener_perfil(config.perfil_fruta)
     try:
         captura = CapturaVideo(config.cam_url)
         captura.abrir()
@@ -217,19 +214,18 @@ def _demo(config: Config) -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
 
-    filtro = FiltroMayoria()
-    print("Clasificación iniciada. Presiona 'q' en la ventana para salir.")
+    filtro = FiltroMayoria(perfil.ventana_mayoria)
+    print(f"Perfil activo: {perfil.nombre}")
+    print("Presiona 'q' en la ventana para salir.")
 
     try:
         while True:
             frame = captura.leer_frame()
             if frame is None:
                 continue
-
-            resultado = clasificar_frame(frame)
+            resultado = clasificar_frame(frame, perfil)
             estado_filtrado = filtro.actualizar(resultado.estado)
-            _dibujar_overlay(frame, resultado, estado_filtrado)
-
+            _dibujar_overlay(frame, resultado, estado_filtrado, perfil)
             cv2.imshow("FrutaEstado - Clasificacion", frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break

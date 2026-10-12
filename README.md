@@ -129,6 +129,66 @@ Esquema de la tabla `registros`:
 | `pct_verde` | REAL | Porcentaje de píxeles verdes en la ROI |
 | `pct_madura` | REAL | Porcentaje de píxeles maduros |
 | `pct_pasada` | REAL | Porcentaje de píxeles pasados |
+| `tipo_fruta` | TEXT | Tipo de fruta (default: 'desconocida') |
+
+### Perfiles HSV por tipo de fruta
+
+El clasificador soporta umbrales HSV especificos por fruta. El perfil activo se define en `.env` con `PERFIL_FRUTA=<nombre>` y se aplica en el pipeline.
+
+**Perfiles incluidos:**
+
+| Perfil | Fruta | Notas |
+|--------|-------|-------|
+| `default` | Generico | Contrato original del proyecto, sin cambios |
+| `platano` | Platano | Amarillo maduro |
+| `mandarina` | Mandarina | Naranja maduro |
+| `manzana_verde` | Manzana verde | Verde-amarillento maduro |
+| `manzana_roja` | Manzana roja | Rojo maduro |
+| `uva_verde` | Uva verde | Verde claro maduro |
+| `uva_morada` | Uva morada | Morado maduro |
+
+**Agregar un perfil nuevo sin tocar codigo** — edita `config/perfiles_custom.json`:
+
+~~~json
+{
+  "pera": {
+    "h_madura_max_bajo": 30,
+    "s_madura_min": 70,
+    "v_madura_min": 100
+  }
+}
+~~~
+
+Los campos no especificados toman los valores del contrato original. El perfil queda disponible en `.env` con `PERFIL_FRUTA=pera`.
+
+**Origen de los valores:**
+
+Los perfiles built-in (en `src/perfiles_frutas.py`) son puntos de partida teoricos. Los perfiles de `config/perfiles_custom.json` fueron calibrados a partir de tablas HSV publicas para: platano, mandarina, manzana verde, manzana roja, uva verde, uva morada. Se recomienda recalibrar con las frutas y la iluminacion reales del entorno de la demo.
+
+**Probar sin hardware — mock del ESP32:**
+
+Si el ESP32 real no esta disponible (o como plan B en la demo), se puede levantar un mock que responde el mismo contrato en el puerto 8080:
+
+~~~bash
+python -m tools.mock_esp32
+~~~
+
+Imprime cada peticion que recibe con timestamp. Para que el pipeline le hable al mock en lugar del ESP32 real, ajusta el `.env`:
+
+~~~
+ESP32_IP=127.0.0.1
+ESP32_PORT=8080
+~~~
+
+Y reinicia el pipeline. Cuando el ESP32 real este disponible, volve a su IP real y detene el mock con `Ctrl+C`. No hay que cambiar codigo.
+
+**Cambiar de perfil sin reiniciar el dashboard:**
+
+~~~bash
+# Editar .env y cambiar PERFIL_FRUTA
+# Reiniciar solo el pipeline (no el dashboard)
+python -m src.main
+~~~
 | `timestamp` | TEXT | ISO en hora local |
 
 ### Arrancar el dashboard
@@ -146,6 +206,9 @@ Abre `http://localhost:5000/` en el navegador. La primera vez crea automáticame
 | GET  | `/`             | Página del dashboard (placeholder hasta S3.4) |
 | POST | `/api/registro` | Inserta una fila. Body: `{estado, pct_verde, pct_madura, pct_pasada}` |
 | GET  | `/api/resumen`  | Devuelve `{conteos, serie_por_minuto, ultimos}` |
+| GET  | `/api/perfil`   | Devuelve el perfil activo del pipeline |
+| POST | `/api/perfil`   | Cambia el perfil activo (`{"perfil":"platano"}`) |
+| GET  | `/api/perfiles` | Lista todos los perfiles disponibles |
 
 ### Ejecutar el pipeline completo con dashboard
 
@@ -179,6 +242,16 @@ http://<IP-DE-LA-LAPTOP>:5000/
 ~~~
 
 La IP la puedes ver con `hostname -I` o `ip a`.
+
+### Cambiar de fruta desde el dashboard
+
+El dashboard incluye un selector arriba a la derecha. Al elegir una fruta:
+
+1. El selector filtra las gráficas y la tabla (solo muestra registros de esa fruta).
+2. El dashboard hace `POST /api/perfil` para cambiar el perfil activo.
+3. El pipeline (`python -m src.main`) consulta el perfil cada 2 segundos y lo aplica en caliente, **sin reiniciar el script**.
+
+Con "Ver todos" seleccionado, se muestran todas las frutas sin filtro y el pipeline mantiene el perfil actual.
 
 ## Hitos
 

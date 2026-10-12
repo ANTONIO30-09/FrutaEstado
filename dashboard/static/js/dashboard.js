@@ -1,42 +1,99 @@
-// Dashboard FrutaEstado — cliente Chart.js
-// Consulta GET /api/resumen cada REFRESH_MS y actualiza los 3 paneles.
+// Dashboard FrutaEstado — cliente JS (rediseño glass verde).
+// - Refresca /api/resumen cada 6 s.
+// - Anima el gauge circular del panel central (S/A/R como 3 arcos).
+// - Actualiza el "Estado actual" (último registro).
+// - Toggle del panel flotante de registros.
+// - Selector de fruta: POST /api/perfil + refetch.
 
 const REFRESH_MS = 6000;
+const COLORES = { S: "#4bb84b", A: "#8ce68c", R: "#227b22" };
+const CIRCUNFERENCIA = 2 * Math.PI * 92; // radio del gauge = 92
 
-const COLORES = { S: "#ef4444", A: "#22c55e", R: "#f59e0b" };
-
-let chartConteos = null;
 let chartSerie = null;
+let tipoFrutaFiltro = "";
 
 async function fetchResumen() {
-  const r = await fetch("/api/resumen");
+  const url = tipoFrutaFiltro
+    ? "/api/resumen?tipo_fruta=" + encodeURIComponent(tipoFrutaFiltro)
+    : "/api/resumen";
+  const r = await fetch(url);
   if (!r.ok) throw new Error("HTTP " + r.status);
   return await r.json();
 }
 
-function initChartConteos() {
-  const ctx = document.getElementById("chart-conteos").getContext("2d");
-  chartConteos = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: ["Madura (S)", "Inmadura (A)", "Pasada (R)"],
-      datasets: [{
-        data: [0, 0, 0],
-        backgroundColor: [COLORES.S, COLORES.A, COLORES.R],
-        borderColor: "#1e293b",
-        borderWidth: 2,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "bottom", labels: { color: "#e2e8f0" } },
-      },
-    },
-  });
+async function setPerfilEnBackend(nombre) {
+  try {
+    const r = await fetch("/api/perfil", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ perfil: nombre }),
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
+// ---------- Gauge circular ----------
+function setArco(idArco, porcentaje, offsetAcumulado) {
+  const el = document.getElementById(idArco);
+  if (!el) return offsetAcumulado;
+  const longitud = (porcentaje / 100) * CIRCUNFERENCIA;
+  // Sin hueco: con stroke-linecap: butt los arcos se conectan
+  // perfectamente sin bultos en las uniones.
+  el.setAttribute("stroke-dasharray", longitud + " " + CIRCUNFERENCIA);
+  el.setAttribute("stroke-dashoffset", -offsetAcumulado);
+  return offsetAcumulado + longitud;
+}
+
+function actualizarGauge(conteos) {
+  const s = conteos.S || 0;
+  const a = conteos.A || 0;
+  const r = conteos.R || 0;
+  const total = s + a + r;
+  if (total === 0) {
+    setArco("arc-s", 0, 0);
+    setArco("arc-a", 0, 0);
+    setArco("arc-r", 0, 0);
+    return;
+  }
+  const pctS = (s / total) * 100;
+  const pctA = (a / total) * 100;
+  const pctR = (r / total) * 100;
+
+  let offset = 0;
+  offset = setArco("arc-s", pctS, offset);
+  offset = setArco("arc-a", pctA, offset);
+  setArco("arc-r", pctR, offset);
+}
+
+// ---------- Contadores ----------
+function actualizarContadores(conteos) {
+  const s = conteos.S || 0;
+  const a = conteos.A || 0;
+  const r = conteos.R || 0;
+  document.getElementById("contador-s").textContent = s;
+  document.getElementById("contador-a").textContent = a;
+  document.getElementById("contador-r").textContent = r;
+  document.getElementById("contador-total").textContent = s + a + r;
+}
+
+// ---------- Estado actual (último registro) ----------
+function actualizarEstadoActual(ultimos) {
+  const el = document.getElementById("estado-actual");
+  if (!el) return;
+  if (!ultimos || ultimos.length === 0) {
+    el.innerHTML = 'Estado actual: <strong>—</strong>';
+    return;
+  }
+  const r = ultimos[0];
+  const nombre = {
+    S: "Madura", A: "Inmadura", R: "Pasada"
+  }[r.estado] || r.estado;
+  el.innerHTML = 'Estado actual: <strong>' + nombre + '</strong>';
+}
+
+// ---------- Gráfica de línea ----------
 function initChartSerie() {
   const ctx = document.getElementById("chart-serie").getContext("2d");
   chartSerie = new Chart(ctx, {
@@ -46,44 +103,50 @@ function initChartSerie() {
       datasets: [{
         label: "Registros por minuto",
         data: [],
-        borderColor: "#60a5fa",
-        backgroundColor: "rgba(96,165,250,0.2)",
+        borderColor: "#8ce68c",
+        backgroundColor: "rgba(140,230,140,0.12)",
         fill: true,
-        tension: 0.3,
-        pointRadius: 3,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: "#8ce68c",
+        pointBorderColor: "#104010",
+        pointBorderWidth: 2,
+        borderWidth: 2.5,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
+        x: {
+          ticks: {
+            color: "rgba(255,255,255,0.65)",
+            font: { family: "Inter", size: 11 },
+          },
+          grid: { color: "rgba(255,255,255,0.08)", drawBorder: false },
+        },
         y: {
           beginAtZero: true,
-          ticks: { color: "#94a3b8", precision: 0 },
-          grid: { color: "#1e293b" },
+          ticks: {
+            color: "rgba(255,255,255,0.65)",
+            precision: 0,
+            font: { family: "Inter", size: 11 },
+          },
+          grid: { color: "rgba(255,255,255,0.08)", drawBorder: false },
         },
       },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: {
+          labels: {
+            color: "rgba(255,255,255,0.85)",
+            font: { family: "Inter", size: 12, weight: 500 },
+            usePointStyle: true,
+            pointStyle: "circle",
+          },
+        },
       },
     },
   });
-}
-
-function actualizarConteos(conteos) {
-  const s = conteos.S || 0;
-  const a = conteos.A || 0;
-  const r = conteos.R || 0;
-  document.getElementById("contador-s").textContent = s;
-  document.getElementById("contador-a").textContent = a;
-  document.getElementById("contador-r").textContent = r;
-  document.getElementById("contador-total").textContent = s + a + r;
-
-  if (chartConteos) {
-    chartConteos.data.datasets[0].data = [s, a, r];
-    chartConteos.update();
-  }
 }
 
 function actualizarSerie(serie) {
@@ -99,23 +162,24 @@ function actualizarSerie(serie) {
   chartSerie.update();
 }
 
+// ---------- Tabla del panel flotante ----------
 function actualizarTabla(ultimos) {
   const tbody = document.getElementById("tbody-ultimos");
   if (!tbody) return;
   tbody.innerHTML = "";
-  if (ultimos.length === 0) {
+  if (!ultimos || ultimos.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:#64748b;">Sin registros todavia</td></tr>';
+      '<tr><td colspan="6" style="text-align:center;opacity:0.6;">Sin registros todavía</td></tr>';
     return;
   }
   for (const r of ultimos) {
     const tr = document.createElement("tr");
     const hora = (r.timestamp || "").slice(11);
-    const color = COLORES[r.estado] || "#666";
+    const clase = "badge " + (r.estado || "").toLowerCase();
     tr.innerHTML =
       "<td>" + hora + "</td>" +
-      '<td><span class="badge" style="background:' + color + '">' +
-      r.estado + "</span></td>" +
+      '<td><span class="' + clase + '">' + r.estado + "</span></td>" +
+      "<td>" + (r.tipo_fruta || "desconocida") + "</td>" +
       "<td>" + r.pct_verde.toFixed(1) + "%</td>" +
       "<td>" + r.pct_madura.toFixed(1) + "%</td>" +
       "<td>" + r.pct_pasada.toFixed(1) + "%</td>";
@@ -123,28 +187,65 @@ function actualizarTabla(ultimos) {
   }
 }
 
+// ---------- Estado de conexión ----------
 function setEstadoConexion(ok, msg) {
   const el = document.getElementById("estado-conexion");
   if (!el) return;
   el.textContent = msg;
-  el.style.color = ok ? "#22c55e" : "#ef4444";
+  el.classList.toggle("error", !ok);
 }
 
+// ---------- Tick periódico ----------
 async function tick() {
   try {
     const data = await fetchResumen();
-    actualizarConteos(data.conteos);
+    actualizarContadores(data.conteos);
+    actualizarGauge(data.conteos);
+    actualizarEstadoActual(data.ultimos);
     actualizarSerie(data.serie_por_minuto);
     actualizarTabla(data.ultimos);
     setEstadoConexion(true, "Actualizado " + new Date().toLocaleTimeString());
   } catch (e) {
-    setEstadoConexion(false, "Error: " + e.message);
+    setEstadoConexion(false, "Sin conexión");
   }
 }
 
+// ---------- Selector ----------
+async function onSelectorChange(ev) {
+  const valor = ev.target.value;
+  tipoFrutaFiltro = valor;
+  // Cambia el SVG del panel central segun la fruta elegida
+  aplicarFruta(valor);
+  // Envia el perfil al backend (incluye "default" y "" para Ver todos)
+  if (valor) {
+    await setPerfilEnBackend(valor);
+  }
+  await tick();
+}
+
+// ---------- Toggle panel flotante ----------
+function initBotonRegistros() {
+  const btn = document.getElementById("btn-registros");
+  const panel = document.getElementById("floating-panel");
+  if (!btn || !panel) return;
+  btn.addEventListener("click", () => {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  });
+}
+
+// ---------- Arranque ----------
 document.addEventListener("DOMContentLoaded", () => {
-  initChartConteos();
   initChartSerie();
+  initBotonRegistros();
+
+  const sel = document.getElementById("selector-fruta");
+  if (sel) {
+    sel.addEventListener("change", onSelectorChange);
+    // Muestra el frutero al arrancar (opcion "Ver todos")
+    aplicarFruta(sel.value);
+  }
+
   tick();
   setInterval(tick, REFRESH_MS);
 });

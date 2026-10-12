@@ -134,11 +134,128 @@ def test_static_dashboard_css_devuelve_200(cliente):
     assert r.status_code == 200
 
 
-def test_index_incluye_canvas_y_scripts(cliente):
+def test_index_incluye_elementos_clave(cliente):
+    """El rediseno glass reemplazo el doughnut por un gauge SVG."""
     r = cliente.get("/")
     html = r.data
-    assert b'id="chart-conteos"' in html
+    # Gauge SVG (los 3 arcos)
+    assert b'id="arc-s"' in html
+    assert b'id="arc-a"' in html
+    assert b'id="arc-r"' in html
+    # Grafica de linea
     assert b'id="chart-serie"' in html
+    # Tabla del panel flotante
     assert b'id="tbody-ultimos"' in html
+    # Boton flotante
+    assert b'id="btn-registros"' in html
+    # Scripts
     assert b'chart.umd.min.js' in html
     assert b'dashboard.js' in html
+
+
+# ---------- /api/perfil y filtro (S4.4) ----------
+
+def test_get_perfil_default(cliente):
+    from dashboard import estado_compartido
+    estado_compartido.reset()
+
+    r = cliente.get("/api/perfil")
+    assert r.status_code == 200
+    assert r.get_json() == {"perfil": "default"}
+
+
+def test_post_perfil_valido(cliente):
+    from dashboard import estado_compartido
+    estado_compartido.reset()
+
+    r = cliente.post("/api/perfil", json={"perfil": "platano"})
+    assert r.status_code == 200
+    assert r.get_json() == {"perfil": "platano"}
+
+    r2 = cliente.get("/api/perfil")
+    assert r2.get_json() == {"perfil": "platano"}
+
+    estado_compartido.reset()
+
+
+def test_post_perfil_desconocido(cliente):
+    from dashboard import estado_compartido
+    estado_compartido.reset()
+
+    r = cliente.post("/api/perfil", json={"perfil": "kiwi_raro"})
+    assert r.status_code == 400
+    assert "perfil" in r.get_json()["error"].lower()
+
+    # Estado no cambio
+    r2 = cliente.get("/api/perfil")
+    assert r2.get_json() == {"perfil": "default"}
+
+
+def test_post_perfil_sin_json(cliente):
+    r = cliente.post("/api/perfil", data="no-json", content_type="text/plain")
+    assert r.status_code == 400
+
+
+def test_post_perfil_sin_campo(cliente):
+    r = cliente.post("/api/perfil", json={"otra_cosa": "x"})
+    assert r.status_code == 400
+
+
+def test_post_perfil_vacio(cliente):
+    r = cliente.post("/api/perfil", json={"perfil": "   "})
+    assert r.status_code == 400
+
+
+def test_get_perfiles_lista(cliente):
+    r = cliente.get("/api/perfiles")
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "perfiles" in data
+    assert "default" in data["perfiles"]
+    assert "platano" in data["perfiles"]
+
+
+def test_resumen_filtra_por_tipo_fruta(cliente):
+    # Insertar 2 platanos y 1 uva
+    for _ in range(2):
+        cliente.post(
+            "/api/registro",
+            json={
+                "estado": "S", "pct_verde": 0, "pct_madura": 0,
+                "pct_pasada": 0, "tipo_fruta": "platano",
+            },
+        )
+    cliente.post(
+        "/api/registro",
+        json={
+            "estado": "A", "pct_verde": 0, "pct_madura": 0,
+            "pct_pasada": 0, "tipo_fruta": "uva_verde",
+        },
+    )
+
+    r_todos = cliente.get("/api/resumen")
+    assert r_todos.get_json()["conteos"]["S"] == 2
+    assert r_todos.get_json()["conteos"]["A"] == 1
+    assert r_todos.get_json()["tipo_fruta"] is None
+
+    r_platano = cliente.get("/api/resumen?tipo_fruta=platano")
+    assert r_platano.get_json()["conteos"]["S"] == 2
+    assert r_platano.get_json()["conteos"]["A"] == 0
+    assert r_platano.get_json()["tipo_fruta"] == "platano"
+
+    r_uva = cliente.get("/api/resumen?tipo_fruta=uva_verde")
+    assert r_uva.get_json()["conteos"]["S"] == 0
+    assert r_uva.get_json()["conteos"]["A"] == 1
+
+
+def test_resumen_tipo_fruta_vacio_es_sin_filtro(cliente):
+    cliente.post(
+        "/api/registro",
+        json={
+            "estado": "S", "pct_verde": 0, "pct_madura": 0,
+            "pct_pasada": 0, "tipo_fruta": "platano",
+        },
+    )
+    r = cliente.get("/api/resumen?tipo_fruta=")
+    assert r.get_json()["tipo_fruta"] is None
+    assert r.get_json()["conteos"]["S"] == 1
