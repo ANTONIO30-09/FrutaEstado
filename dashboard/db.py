@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS registros (
     pct_madura      REAL NOT NULL,
     pct_pasada      REAL NOT NULL,
     tipo_fruta      TEXT NOT NULL DEFAULT 'desconocida',
-    timestamp       TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    timestamp       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_registros_timestamp ON registros(timestamp);
 CREATE INDEX IF NOT EXISTS idx_registros_estado ON registros(estado);
@@ -231,24 +231,24 @@ def obtener_ultimos_registros(
 
 
 def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
-    """Devuelve registros por minuto. Ventana por defecto: 4 horas (14400s)."""
+    """Devuelve registros por minuto. Guarda y consulta en UTC."""
     from src.config import cargar_config
     if db_path is None:
         db_path = cargar_config().db_path
         
     conn = conectar(db_path)
     try:
-        # Usamos el formato ISO directamente para evitar problemas de timezone
+        # Usamos formato ISO 8601 con 'Z' (UTC) para que JS lo entienda perfecto
         if tipo_fruta is None:
             filas = conn.execute(
                 """
                 SELECT 
-                    strftime('%Y-%m-%dT%H:%M:00', timestamp) AS tiempo_str,
+                    strftime('%Y-%m-%dT%H:%M:00Z', timestamp) AS tiempo_str,
                     SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
                     SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
                     SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
-                WHERE timestamp >= datetime('now', 'localtime', ?)
+                WHERE timestamp >= datetime('now', ?)
                 GROUP BY tiempo_str
                 ORDER BY tiempo_str ASC
                 """,
@@ -258,12 +258,12 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
             filas = conn.execute(
                 """
                 SELECT 
-                    strftime('%Y-%m-%dT%H:%M:00', timestamp) AS tiempo_str,
+                    strftime('%Y-%m-%dT%H:%M:00Z', timestamp) AS tiempo_str,
                     SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
                     SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
                     SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
-                WHERE timestamp >= datetime('now', 'localtime', ?)
+                WHERE timestamp >= datetime('now', ?)
                   AND tipo_fruta = ?
                 GROUP BY tiempo_str
                 ORDER BY tiempo_str ASC
@@ -276,21 +276,20 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
     if not filas:
         return []
 
-    # Rellenar vacíos
     from datetime import datetime, timedelta
     datos_reales = {fila["tiempo_str"]: fila for fila in filas}
     
-    # Tomamos el primer y último registro real
     inicio_str = filas[0]["tiempo_str"]
     fin_str = filas[-1]["tiempo_str"]
     
-    inicio_dt = datetime.fromisoformat(inicio_str)
-    fin_dt = datetime.fromisoformat(fin_str)
+    # Parseamos el tiempo quitando la 'Z' para operar
+    inicio_dt = datetime.fromisoformat(inicio_str.replace('Z', ''))
+    fin_dt = datetime.fromisoformat(fin_str.replace('Z', ''))
     
     resultado = []
     actual_dt = inicio_dt
     while actual_dt <= fin_dt:
-        tiempo_actual = actual_dt.isoformat(timespec='minutes')
+        tiempo_actual = actual_dt.isoformat(timespec='minutes') + 'Z'
         if tiempo_actual in datos_reales:
             fila = datos_reales[tiempo_actual]
             resultado.append({"tiempo_str": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
