@@ -214,9 +214,9 @@ body::after {
   border-radius: 50%;
 }
 
-.dot.s { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
-.dot.a { background: var(--mint); box-shadow: 0 0 8px var(--mint); }
-.dot.r { background: var(--forest); box-shadow: 0 0 8px var(--forest); }
+.dot.s { background: #4bb84b; box-shadow: 0 0 8px #4bb84b; }
+.dot.a { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+.dot.r { background: #ff4b4b; box-shadow: 0 0 8px #ff4b4b; }
 
 .stat-row .val {
   font-size: 1.75rem;
@@ -289,9 +289,9 @@ body::after {
   transition: stroke-dasharray 0.6s ease;
 }
 
-.gauge-svg .arc-s { stroke: var(--emerald); }
-.gauge-svg .arc-a { stroke: var(--mint); }
-.gauge-svg .arc-r { stroke: var(--forest); }
+.gauge-svg .arc-s { stroke: #4bb84b; }
+.gauge-svg .arc-a { stroke: #ffd700; }
+.gauge-svg .arc-r { stroke: #ff4b4b; }
 
 .fruit-img {
   position: relative;

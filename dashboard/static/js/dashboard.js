@@ -6,7 +6,7 @@
 // - Selector de fruta: POST /api/perfil + refetch.
 
 const REFRESH_MS = 6000;
-const COLORES = { S: "#4bb84b", A: "#8ce68c", R: "#227b22" };
+const COLORES = { S: "#4bb84b", A: "#ffd700", R: "#ff4b4b" };
 const CIRCUNFERENCIA = 2 * Math.PI * 92; // radio del gauge = 92
 
 let chartSerie = null;
@@ -103,12 +103,12 @@ function initChartSerie() {
       datasets: [{
         label: "Registros por minuto",
         data: [],
-        borderColor: "#8ce68c",
+        borderColor: "#ffd700",
         backgroundColor: "rgba(140,230,140,0.12)",
         fill: true,
         tension: 0.4,
         pointRadius: 4,
-        pointBackgroundColor: "#8ce68c",
+        pointBackgroundColor: "#ffd700",
         pointBorderColor: "#104010",
         pointBorderWidth: 2,
         borderWidth: 2.5,
