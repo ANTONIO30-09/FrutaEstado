@@ -51,6 +51,20 @@ def _resolver_perfil_yolo(clase_yolo: str, roi: np.ndarray) -> tuple[str, Result
     return mejor_perfil, mejor_res
 
 def _loop(cfg: Config) -> int:
+    # --- LEER CONFIGURACIÓN DESDE LA WEB ---
+    import json
+    from pathlib import Path
+    config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
+    if config_path.exists():
+        try:
+            web_cfg = json.loads(config_path.read_text())
+            if web_cfg.get("cam_url"):
+                cfg.cam_url = web_cfg["cam_url"]
+            if web_cfg.get("esp32_ip"):
+                cfg.esp32_ip = web_cfg["esp32_ip"]
+        except Exception:
+            pass
+
     try:
         captura = CapturaVideo(cfg.cam_url)
         captura.abrir()
@@ -136,13 +150,17 @@ def _loop(cfg: Config) -> int:
                     else: dash_fail += 1
                     estado_anterior = estado_filtrado
 
-            # Overlay visual
-            if frame is not None and bbox:
-                x1, y1, x2, y2 = bbox
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                texto = f"{tipo_fruta_real} | {estado_filtrado or '-'}"
-                color = COLORES.get(estado_filtrado, (255, 255, 255))
-                cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+            # Overlay visual (SIEMPRE mostramos la ventana, haya o no fruta)
+            if frame is not None:
+                if bbox:
+                    x1, y1, x2, y2 = bbox
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    texto = f"{tipo_fruta_real} | {estado_filtrado or '-'}"
+                    color = COLORES.get(estado_filtrado, (255, 255, 255))
+                    cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+                else:
+                    cv2.putText(frame, "Buscando fruta...", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+                
                 cv2.imshow("FrutaEstado - YOLO + HSV", frame)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrutaEstado — Configuración Inicial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <style>
+    .setup-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .setup-card {
+      width: 100%;
+      max-width: 500px;
+      padding: 3rem 2.5rem;
+    }
+    .setup-card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .setup-card p {
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      font-weight: 500;
+    }
+    .form-group input {
+      background: var(--glass-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 1rem;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--mint);
+      box-shadow: 0 0 10px rgba(140, 230, 140, 0.2);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--emerald);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+    .btn-primary:hover {
+      background: var(--forest);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-container">
+    <div class="setup-card glass">
+      <h2>Configuración de Red</h2>
+      <p>Ingresa los datos de conexión para la cámara y el hardware.</p>
+      
+      <form method="POST" action="/setup">
+        <div class="form-group">
+          <label for="cam_url">URL de la Cámara (DroidCam o Webcam)</label>
+          <input type="text" id="cam_url" name="cam_url" value="{{ config.cam_url }}" placeholder="Ej: http://192.168.1.50:4747/video o 0">
+        </div>
+        <div class="form-group">
+          <label for="esp32_ip">IP del ESP32</label>
+          <input type="text" id="esp32_ip" name="esp32_ip" value="{{ config.esp32_ip }}" placeholder="Ej: 192.168.1.100">
+        </div>
+        <div class="form-group">
+          <label for="mask">Máscara de Red</label>
+          <input type="text" id="mask" name="mask" value="{{ config.mask }}" placeholder="Ej: 255.255.255.0">
+        </div>
+        
+        <button type="submit" class="btn-primary">Guardar y Entrar al Dashboard</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
