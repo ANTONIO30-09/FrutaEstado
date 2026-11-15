@@ -15,7 +15,19 @@ from src.cliente_esp32 import enviar_estado
 # Importamos la función de la DB directamente para evitar peticiones HTTP a nosotros mismos
 from dashboard.db import insertar_registro
 
+
 log = logging.getLogger(__name__)
+
+MAPEO_FRUTAS = {
+    "banana": "Plátano",
+    "apple": "Manzana",
+    "orange": "Mandarina",
+    "grape": "Uva",
+    "default": "Fruta"
+}
+
+ESTADOS_ES = {"S": "Madura", "A": "Inmadura", "R": "Pasada"}
+
 
 class CameraManager:
     def __init__(self):
@@ -84,14 +96,16 @@ class CameraManager:
                     if estado and estado != estado_anterior:
                         # Guardamos en DB directamente (sin petición HTTP)
                         try:
-                            insertar_registro(cfg.db_path, estado, res.pct_verde, res.pct_madura, res.pct_pasada, tipo_fruta)
+                            insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=tipo_fruta, db_path=cfg.db_path)
                             enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
                             estado_anterior = estado
                         except Exception as e:
                             print(f"[DB] Error: {e}")
 
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(frame, f"{tipo_fruta} | {estado or '-'}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    fruta_es = MAPEO_FRUTAS.get(tipo_fruta.lower(), "Fruta")
+                    estado_es = ESTADOS_ES.get(estado, "-")
+                    cv2.putText(frame, f"{fruta_es} | {estado_es}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
             ret, buffer = cv2.imencode('.jpg', frame)
             if ret:
