@@ -3,103 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrutaEstado — Configuración Inicial</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>FrutaEstado — Configuración</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/dashboard.css">
   <style>
-    .setup-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    .setup-card {
-      width: 100%;
-      max-width: 500px;
-      padding: 3rem 2.5rem;
-    }
-    .setup-card h2 {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-      text-align: center;
-    }
-    .setup-card p {
-      color: var(--text-muted);
-      text-align: center;
-      margin-bottom: 2rem;
-      font-size: 0.9rem;
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .form-group label {
-      font-size: 0.85rem;
-      color: var(--text-soft);
-      font-weight: 500;
-    }
-    .form-group input {
-      background: var(--glass-strong);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-sm);
-      padding: 0.8rem 1rem;
-      color: var(--white);
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-    }
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--mint);
-      box-shadow: 0 0 10px rgba(140, 230, 140, 0.2);
-    }
-    .btn-primary {
-      width: 100%;
-      padding: 0.9rem;
-      background: var(--emerald);
-      color: var(--white);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 1rem;
-    }
-    .btn-primary:hover {
-      background: var(--forest);
-      transform: translateY(-2px);
-    }
+    body { margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: url('/static/img/fondo_fruta_estado.png') center/cover fixed no-repeat, linear-gradient(180deg, #227b22 0%, #104010 100%); }
+    .setup-card { width: 100%; max-width: 420px; padding: 2rem 2.5rem; text-align: center; position: relative; }
+    .logout-btn { position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(255,75,75,0.2); border: 1px solid rgba(255,75,75,0.5); color: #ff4b4b; padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: 0.2s; }
+    .logout-btn:hover { background: #ff4b4b; color: white; }
+    .setup-card h2 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+    .setup-card p { color: var(--text-muted); margin-bottom: 1.2rem; font-size: 0.85rem; }
+    .form-group { margin-bottom: 0.8rem; text-align: left; }
+    .form-group label { font-size: 0.8rem; color: var(--text-soft); margin-bottom: 0.3rem; display: block; }
+    .form-group input { width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.7rem 1rem; color: var(--white); font-family: inherit; font-size: 0.95rem; outline: none; box-sizing: border-box; }
+    .btn-primary { width: 100%; padding: 0.8rem; background: var(--emerald); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: 0.2s; }
+    .btn-primary:hover { background: var(--forest); transform: translateY(-2px); }
+    .btn-test { width: 100%; padding: 0.6rem; background: var(--glass-strong); color: var(--text-soft); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: 0.2s; }
+    .btn-test:hover { border-color: var(--mint); color: var(--white); }
+    #test-msg { font-size: 0.8rem; margin-top: 0.8rem; display: none; padding: 0.5rem; border-radius: 5px; }
+    .logo-container { margin-bottom: 0.5rem; display: flex; justify-content: center; }
+    .login-logo { width: 100px; height: auto; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.4)); }
   </style>
 </head>
 <body>
-  <div class="setup-container">
-    <div class="setup-card glass">
-      <h2>Configuración de Red</h2>
-      <p>Ingresa los datos de conexión para la cámara y el hardware.</p>
-      
-      <form method="POST" action="/setup">
-        <div class="form-group">
-          <label for="cam_ip">IP de la Cámara (DroidCam) o 0 para Webcam</label>
-          <input type="text" id="cam_ip" name="cam_ip" value="{{ config.cam_ip }}" placeholder="Ej: 192.168.1.3 o 0">
-        </div>
-        <div class="form-group">
-          <label for="cam_port">Puerto de la Cámara</label>
-          <input type="text" id="cam_port" name="cam_port" value="{{ config.cam_port }}" placeholder="Ej: 4747">
-        </div>
-        <div class="form-group">
-          <label for="esp32_ip">IP del ESP32</label>
-          <input type="text" id="esp32_ip" name="esp32_ip" value="{{ config.esp32_ip }}" placeholder="Ej: 192.168.1.100">
-        </div>
-        
-        <button type="submit" class="btn-primary">Guardar y Entrar al Dashboard</button>
-      </form>
+  <div class="setup-card glass">
+    <a href="/logout" class="logout-btn">Cerrar Sesión</a>
+    
+    <div class="logo-container">
+      <img src="/static/img/LOGOFrutaEstado.png" alt="Logo FrutaEstado" class="login-logo">
     </div>
+    <h2>Configurar Cámara</h2>
+    <p>Ingresa los datos de tu celular (DroidCam)</p>
+    
+    <form id="setup-form">
+      <div class="form-group">
+        <label for="cam_ip">IP de la Cámara (o 0 para webcam local)</label>
+        <input type="text" id="cam_ip" name="cam_ip" value="{{ config.cam_ip }}" placeholder="Ej: 192.168.1.3" required>
+      </div>
+      <div class="form-group">
+        <label for="cam_port">Puerto (DroidCam usa 4747)</label>
+        <input type="text" id="cam_port" name="cam_port" value="{{ config.cam_port }}" placeholder="Ej: 4747" required>
+      </div>
+      
+      <button type="button" class="btn-test" id="btn-test">Probar Conexión</button>
+      <div id="test-msg"></div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label for="esp32_ip">IP del ESP32 (Opcional)</label>
+        <input type="text" id="esp32_ip" name="esp32_ip" value="{{ config.esp32_ip }}" placeholder="Ej: 192.168.1.100">
+      </div>
+
+      <button type="submit" class="btn-primary">Guardar y Entrar</button>
+    </form>
   </div>
+
+  <script>
+    const btnTest = document.getElementById('btn-test');
+    const testMsg = document.getElementById('test-msg');
+    const form = document.getElementById('setup-form');
+
+    // Probar conexión
+    btnTest.addEventListener('click', async () => {
+      const ip = document.getElementById('cam_ip').value;
+      const port = document.getElementById('cam_port').value;
+      
+      btnTest.textContent = "Probando...";
+      testMsg.style.display = "none";
+
+      try {
+        const res = await fetch('/api/test_camera', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip: ip, port: port })
+        });
+        const data = await res.json();
+        
+        testMsg.style.display = "block";
+        if (data.success) {
+          testMsg.style.background = "rgba(75,184,75,0.2)";
+          testMsg.style.color = "#4bb84b";
+          testMsg.textContent = "✅ " + data.msg;
+        } else {
+          testMsg.style.background = "rgba(255,75,75,0.2)";
+          testMsg.style.color = "#ff4b4b";
+          testMsg.textContent = "❌ " + data.msg;
+        }
+      } catch (e) {
+        testMsg.style.display = "block";
+        testMsg.style.background = "rgba(255,75,75,0.2)";
+        testMsg.style.color = "#ff4b4b";
+        testMsg.textContent = "❌ Error de red al probar.";
+      }
+      btnTest.textContent = "Probar Conexión";
+    });
+
+    // Enviar el formulario normal (POST)
+    form.addEventListener('submit', (e) => {
+      // El formulario se envía por POST a /setup mediante Flask.
+      // Flask guardará y redirigirá al dashboard.
+    });
+  </script>
 </body>
 </html>

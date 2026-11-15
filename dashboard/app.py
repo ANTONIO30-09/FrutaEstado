@@ -217,4 +217,25 @@ def crear_app(db_path: str | None = None) -> Flask:
         except Exception as e:
             return jsonify({"error": str(e)}), 401
 
+
+    @app.route("/api/test_camera", methods=["POST"])
+    def api_test_camera():
+        data = request.get_json()
+        cam_ip = data.get("ip")
+        cam_port = data.get("port")
+        
+        if cam_ip == "0":
+            return jsonify({"success": True, "msg": "Usando webcam local"})
+            
+        url = f"http://{cam_ip}:{cam_port}/video"
+        import cv2
+        cap = cv2.VideoCapture(url)
+        success = cap.isOpened()
+        cap.release()
+        
+        if success:
+            return jsonify({"success": True, "msg": "¡Cámara conectada exitosamente!"})
+        else:
+            return jsonify({"success": False, "msg": "No se pudo conectar. Revisa la IP y el Puerto."})
+
     return app
