@@ -1,34 +1,19 @@
-"""Aplicación Flask del dashboard FrutaEstado.
-
-Expone:
-- GET  /                 → HTML del dashboard (placeholder hasta S3.4).
-- POST /api/registro     → inserta un registro en SQLite.
-- GET  /api/resumen      → conteos + serie por minuto + últimos 10.
-
-El patrón `crear_app` (factory) permite instanciar la app con una db_path
-temporal en los tests, sin tocar data/frutas.db.
-"""
-
 from __future__ import annotations
+import os
+import time
+import sqlite3
+import json
+from pathlib import Path
+from flask import Flask, jsonify, render_template, request, redirect, url_for
+from flask_cors import CORS
+
 from dashboard.db import (
     init_db, insertar_registro, obtener_conteos,
     obtener_ultimos, serie_por_minuto, serie_por_segundo
 )
+from dashboard.camera_manager import CameraManager
 
-import time
-import json
-from pathlib import Path
-
-from pathlib import Path
-
-from flask import Flask, jsonify, render_template, request, redirect, url_for
-from flask_cors import CORS
-
-from src.perfiles_frutas import PERFILES
-
-from dashboard.estado_compartido import (
-    get_perfil as get_perfil_activo,
-    set_perfil as set_perfil_activo,
+camera_manager = CameraManager()
 
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
 
