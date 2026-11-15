@@ -705,3 +705,51 @@ body::after {
   .summary-row { flex-wrap: wrap; gap: 1rem; }
   .summary-item.total { border-left: none; padding-left: 0; }
 }
+
+/* --- FORZAR CENTRADO DEL FRUTERO Y EL GAUGE --- */
+.left-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2rem !important;
+  position: relative !important;
+}
+
+.fruit-wrapper {
+  position: relative !important;
+  width: 280px !important; /* Tamaño fijo para que no se deforme */
+  height: 280px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gauge-svg {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+
+.fruit-img {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important; /* Centrado matemático */
+  width: 65% !important; /* La fruta un poco más pequeña que el círculo */
+  height: 65% !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* El texto de "Estado actual" lo bajamos un poco para que no choque */
+.estado-actual {
+  position: static !important;
+  margin-top: 2rem !important;
+  transform: none !important;
+}
