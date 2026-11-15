@@ -99,18 +99,17 @@ function initChartSerie() {
   chartSerie = new Chart(ctx, {
     type: "line",
     data: {
-      labels: [],
       datasets: [{
-        label: "Registros por segundo",
+        label: "Registros",
         data: [],
-        borderColor: "#ffd700",
-        backgroundColor: "rgba(140,230,140,0.12)",
+        borderColor: "#4bb84b",
+        backgroundColor: "rgba(75,184,75,0.15)",
         fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: "#ffd700",
+        tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: "#4bb84b",
         pointBorderColor: "#104010",
-        pointBorderWidth: 2,
+        pointBorderWidth: 1,
         borderWidth: 2.5,
       }],
     },
@@ -119,9 +118,19 @@ function initChartSerie() {
       maintainAspectRatio: false,
       scales: {
         x: {
+          type: 'time',
+          time: {
+            minUnit: 'second',
+            displayFormats: {
+              second: 'HH:mm:ss',
+              minute: 'HH:mm',
+              hour: 'HH:mm'
+            }
+          },
           ticks: {
             color: "rgba(255,255,255,0.65)",
             font: { family: "Inter", size: 11 },
+            maxRotation: 0,
           },
           grid: { color: "rgba(255,255,255,0.08)", drawBorder: false },
         },
@@ -153,17 +162,12 @@ function actualizarSerie(serie) {
   if (!chartSerie) return;
   const mapa = new Map();
   for (const item of serie) {
-    // item.segundo viene como "HH:MM:SS", lo convertimos a un objeto Date para Chart.js
-    const fecha = new Date();
-    const [h, m, s] = item.segundo.split(':');
-    fecha.setHours(h, m, s, 0);
-    const tiempoMs = fecha.getTime();
+    // Ahora db.py devuelve timestamp_ms directamente
+    const tiempoMs = item.timestamp_ms;
     const prev = mapa.get(tiempoMs) || 0;
     mapa.set(tiempoMs, prev + item.conteo);
   }
-  // Ordenamos por tiempo
   const tiempos = Array.from(mapa.keys()).sort((a, b) => a - b);
-  // Chart.js espera un array de objetos {x: timestamp, y: valor} para escalas de tiempo
   const datos = tiempos.map(t => ({ x: t, y: mapa.get(t) }));
   
   chartSerie.data.datasets[0].data = datos;
@@ -180,13 +184,20 @@ function actualizarTabla(ultimos) {
       '<tr><td colspan="6" style="text-align:center;opacity:0.6;">Sin registros todavía</td></tr>';
     return;
   }
+  const estadosMap = {
+    'S': { texto: 'Madura', clase: 's' },
+    'A': { texto: 'Inmadura', clase: 'a' },
+    'R': { texto: 'Pasada', clase: 'r' }
+  };
+
   for (const r of ultimos) {
     const tr = document.createElement("tr");
     const hora = (r.timestamp || "").slice(11);
-    const clase = "badge " + (r.estado || "").toLowerCase();
+    const est = estadosMap[r.estado] || { texto: r.estado, clase: '' };
+    const clase = "badge " + est.clase;
     tr.innerHTML =
       "<td>" + hora + "</td>" +
-      '<td><span class="' + clase + '">' + r.estado + "</span></td>" +
+      '<td><span class="' + clase + '">' + est.texto + "</span></td>" +
       "<td>" + (r.tipo_fruta || "desconocida") + "</td>" +
       "<td>" + r.pct_verde.toFixed(1) + "%</td>" +
       "<td>" + r.pct_madura.toFixed(1) + "%</td>" +

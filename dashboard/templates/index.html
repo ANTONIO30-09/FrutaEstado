@@ -117,8 +117,28 @@
   </section>
 
   <!-- Panel flotante de registros (Opcional, se mantiene) -->
-  <div class="floating-panel" id="floating-panel" style="display:none;">
-    <!-- Se puede usar en el futuro o remover si no se usa -->
+  <div class="floating-panel" id="floating-panel">
+    <div class="panel-header">
+      <h2>Últimos 10 registros</h2>
+      <button class="btn-cerrar-panel" id="btn-cerrar-panel" aria-label="Cerrar panel">
+        <span class="chevron">▼</span>
+      </button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Estado</th>
+          <th>Fruta</th>
+          <th>% Verde</th>
+          <th>% Madura</th>
+          <th>% Pasada</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-ultimos">
+        <tr><td colspan="6" style="text-align:center;opacity:0.6;">Cargando…</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <script src="/static/js/chart.umd.min.js"></script>
