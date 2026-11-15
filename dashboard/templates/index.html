@@ -60,20 +60,18 @@
 
     <!-- Panel central: fruta con gauge circular -->
     <section class="center-panel">
-      <div class="fruit-wrapper">
-        <svg class="gauge-svg" viewBox="0 0 200 200">
-          <circle class="track" cx="100" cy="100" r="92"/>
-          <circle id="arc-s" class="arc arc-s" cx="100" cy="100" r="92"
-                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
-          <circle id="arc-a" class="arc arc-a" cx="100" cy="100" r="92"
-                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
-          <circle id="arc-r" class="arc arc-r" cx="100" cy="100" r="92"
-                  stroke-dasharray="0 578" stroke-dashoffset="0"/>
-        </svg>
-
-        <div class="fruit-img" id="fruit-img">
-          <!-- El JS inyecta aqui el SVG segun la fruta seleccionada -->
+      <!-- Recuadro de Video -->
+      <div class="video-wrapper glass" style="width:100%; max-width:700px; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:28px; margin-bottom:1rem; position:relative;">
+        <img id="video-stream" src="" alt="Camara apagada" style="width:100%; height:100%; object-fit:cover; display:none;">
+        <div id="video-placeholder" style="text-align:center; color:var(--text-muted);">
+          <h3>Cámara Apagada</h3>
+          <p>Presiona "Encender Cámara" para iniciar</p>
         </div>
+      </div>
+
+      <!-- Botón de Encendido -->
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+        <button id="btn-camara" class="btn-registros" style="background:var(--emerald); border:none; padding:0.8rem 2rem; font-size:1rem;">Encender Cámara</button>
       </div>
       <div class="estado-actual" id="estado-actual">
         Estado actual: <strong>—</strong>

@@ -268,3 +268,35 @@ document.addEventListener("DOMContentLoaded", () => {
   tick();
   setInterval(tick, REFRESH_MS);
 });
+
+// --- Lógica de la Cámara ---
+document.addEventListener("DOMContentLoaded", () => {
+    const btnCam = document.getElementById("btn-camara");
+    const videoStream = document.getElementById("video-stream");
+    const placeholder = document.getElementById("video-placeholder");
+
+    if(btnCam) {
+        btnCam.addEventListener("click", async () => {
+            const isRunning = btnCam.textContent.includes("Apagar");
+            
+            if (isRunning) {
+                // Detener
+                await fetch("/api/camera/stop", { method: "POST" });
+                videoStream.style.display = "none";
+                videoStream.src = "";
+                placeholder.style.display = "block";
+                btnCam.textContent = "Encender Cámara";
+                btnCam.style.background = "var(--emerald)";
+            } else {
+                // Encender
+                btnCam.textContent = "Iniciando...";
+                await fetch("/api/camera/start", { method: "POST" });
+                videoStream.src = "/video_feed";
+                videoStream.style.display = "block";
+                placeholder.style.display = "none";
+                btnCam.textContent = "Apagar Cámara";
+                btnCam.style.background = "#ff4b4b";
+            }
+        });
+    }
+});

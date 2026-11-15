@@ -38,6 +38,9 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
 
 
+from dashboard.camera_manager import CameraManager
+camera_manager = CameraManager()
+
 def crear_app(db_path: str | None = None) -> Flask:
     """Crea la app Flask. Si db_path es None, usa el del .env."""
     app = Flask(__name__, template_folder=str(TEMPLATES_DIR))
@@ -50,6 +53,7 @@ def crear_app(db_path: str | None = None) -> Flask:
     @app.get("/")
     def index():
         import os
+import time
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
         # Si estamos en pytest, ignoramos la redireccion para no romper los tests
         if not config_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
@@ -194,6 +198,33 @@ def crear_app(db_path: str | None = None) -> Flask:
             return redirect(url_for("index"))
             
         return render_template("setup.html", config=config_actual)
+
+
+    @app.route("/video_feed")
+    def video_feed():
+        from flask import Response
+        def generate():
+            while camera_manager.running:
+                frame = camera_manager.get_frame()
+                if frame:
+                    yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                else:
+                    time.sleep(0.1)
+        return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+    @app.route("/api/camera/start", methods=["POST"])
+    def api_camera_start():
+        camera_manager.start()
+        return jsonify({"status": "ok"})
+
+    @app.route("/api/camera/stop", methods=["POST"])
+    def api_camera_stop():
+        camera_manager.stop()
+        return jsonify({"status": "ok"})
+
+    @app.route("/api/camera/status")
+    def api_camera_status():
+        return jsonify({"running": camera_manager.running})
 
     return app
 
