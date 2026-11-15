@@ -230,25 +230,28 @@ def obtener_ultimos_registros(
     return [dict(fila) for fila in filas]
 
 
-def serie_por_segundo(db_path=None, ventana_segundos=3600, tipo_fruta=None):
-    """Devuelve los registros agrupados por segundo y estado, con timestamp en ms."""
+def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
+    """Devuelve los registros agrupados por minuto, rellenando con 0 los vacíos.
+    
+    ventana_segundos por defecto es 86400 (24 horas).
+    """
     from src.config import cargar_config
     if db_path is None:
         db_path = cargar_config().db_path
         
     conn = conectar(db_path)
     try:
-        # Agrupamos por el timestamp exacto en milisegundos
         if tipo_fruta is None:
             filas = conn.execute(
                 """
                 SELECT 
-                    CAST(strftime('%s', timestamp) AS INTEGER) * 1000 AS timestamp_ms,
-                    estado, 
-                    COUNT(*) AS conteo
+                    CAST(strftime('%s', timestamp) AS INTEGER) / 60 * 60000 AS timestamp_ms,
+                    SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
+                    SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
+                    SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
-                GROUP BY timestamp_ms, estado
+                GROUP BY timestamp_ms
                 ORDER BY timestamp_ms ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds",),
@@ -257,17 +260,39 @@ def serie_por_segundo(db_path=None, ventana_segundos=3600, tipo_fruta=None):
             filas = conn.execute(
                 """
                 SELECT 
-                    CAST(strftime('%s', timestamp) AS INTEGER) * 1000 AS timestamp_ms,
-                    estado, 
-                    COUNT(*) AS conteo
+                    CAST(strftime('%s', timestamp) AS INTEGER) / 60 * 60000 AS timestamp_ms,
+                    SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
+                    SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
+                    SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
                   AND tipo_fruta = ?
-                GROUP BY timestamp_ms, estado
+                GROUP BY timestamp_ms
                 ORDER BY timestamp_ms ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds", tipo_fruta),
             ).fetchall()
     finally:
         conn.close()
-    return [dict(fila) for fila in filas]
+    
+    if not filas:
+        return []
+
+    # Rellenar vacíos (para que se vea la montaña)
+    import time
+    ahora_min = (int(time.time()) // 60) * 60000
+    inicio_min = ahora_min - (ventana_segundos // 60) * 60000
+    
+    datos_reales = {fila["timestamp_ms"]: fila for fila in filas}
+    resultado = []
+    
+    tiempo_actual = inicio_min
+    while tiempo_actual <= ahora_min:
+        if tiempo_actual in datos_reales:
+            fila = datos_reales[tiempo_actual]
+            resultado.append({"timestamp_ms": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
+        else:
+            resultado.append({"timestamp_ms": tiempo_actual, "S": 0, "A": 0, "R": 0, "conteo": 0})
+        tiempo_actual += 60000 # Sumar 1 minuto
+        
+    return resultado

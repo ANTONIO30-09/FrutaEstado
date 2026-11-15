@@ -136,7 +136,7 @@ function initChartSerie() {
           time: {
             minUnit: 'second',
             displayFormats: {
-              second: 'HH:mm:ss',
+              minute: 'HH:mm',
               minute: 'HH:mm',
               hour: 'HH:mm'
             }
