@@ -228,3 +228,31 @@ def obtener_ultimos_registros(
     finally:
         conn.close()
     return [dict(fila) for fila in filas]
+
+
+def serie_por_segundo(db_path=None, ventana_segundos=60, tipo_fruta=None):
+    """Devuelve los registros agrupados por segundo en la ventana dada."""
+    from src.config import cargar_config
+    if db_path is None:
+        db_path = cargar_config().db_path
+        
+    conn = sqlite3.connect(db_path)
+    query = """
+        SELECT strftime('%H:%M:%S', timestamp) as segundo, COUNT(*)
+        FROM registros
+        WHERE timestamp >= datetime('now', 'localtime', ?)
+    """
+    params = [f'-{ventana_segundos} seconds']
+    
+    if tipo_fruta:
+        query += " AND tipo_fruta = ?"
+        params.append(tipo_fruta)
+        
+    query += " GROUP BY segundo ORDER BY segundo ASC"
+    
+    cur = conn.cursor()
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+    
+    return [{"segundo": r[0], "total": r[1]} for r in rows]

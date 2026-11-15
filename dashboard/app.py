@@ -25,7 +25,7 @@ from dashboard.estado_compartido import (
     get_perfil as get_perfil_activo,
     set_perfil as set_perfil_activo,
 )
-from dashboard.db import (
+from dashboard.db import serie_por_segundo, (
     ESTADOS_VALIDOS,
     init_db,
     insertar_registro,

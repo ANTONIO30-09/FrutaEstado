@@ -101,7 +101,7 @@ function initChartSerie() {
     data: {
       labels: [],
       datasets: [{
-        label: "Registros por minuto",
+        label: "Registros por segundo",
         data: [],
         borderColor: "#ffd700",
         backgroundColor: "rgba(140,230,140,0.12)",
