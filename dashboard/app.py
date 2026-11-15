@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_cors import CORS
 
 from src.perfiles_frutas import PERFILES
@@ -145,6 +145,27 @@ def crear_app(db_path: str | None = None) -> Flask:
     @app.get("/api/perfiles")
     def api_perfiles_list():
         return jsonify({"perfiles": sorted(PERFILES.keys())})
+
+    @app.route("/setup", methods=["GET", "POST"])
+    def setup():
+        config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
+        config_actual = {"cam_url": "0", "esp32_ip": "192.168.1.100", "mask": "255.255.255.0"}
+        
+        if config_path.exists():
+            try:
+                config_actual.update(json.loads(config_path.read_text()))
+            except Exception:
+                pass
+                
+        if request.method == "POST":
+            config_actual["cam_url"] = request.form.get("cam_url", "")
+            config_actual["esp32_ip"] = request.form.get("esp32_ip", "")
+            config_actual["mask"] = request.form.get("mask", "")
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(json.dumps(config_actual, indent=2))
+            return redirect(url_for("index"))
+            
+        return render_template("setup.html", config=config_actual)
 
     return app
 
