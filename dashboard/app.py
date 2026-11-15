@@ -8,9 +8,11 @@ from flask_cors import CORS
 
 from dashboard.db import (
     init_db, insertar_registro, obtener_conteos_por_estado,
-    obtener_ultimos, serie_por_minuto, serie_por_segundo
+    obtener_ultimos_registros, obtener_serie_por_minuto, serie_por_segundo
 )
 from dashboard.camera_manager import CameraManager
+from dashboard.estado_compartido import get_perfil, set_perfil
+from src.perfiles_frutas import listar_nombres
 
 camera_manager = CameraManager()
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
@@ -105,14 +107,43 @@ def crear_app(db_path: str | None = None) -> Flask:
 
         conteos = obtener_conteos_por_estado(db_path_efectivo, tipo_fruta)
         
-        # Intentamos usar la nueva función por segundos si estamos en la web,
-        # pero mantenemos compatibilidad con el test que pide por minuto
         if os.environ.get("PYTEST_CURRENT_TEST"):
-            serie = serie_por_minuto(db_path_efectivo, 60, tipo_fruta)
+            serie = obtener_serie_por_minuto(db_path_efectivo, 60, tipo_fruta)
         else:
             serie = serie_por_segundo(db_path_efectivo, 60, tipo_fruta)
             
         return jsonify({"conteos": conteos, "serie": serie})
+
+    @app.get("/api/ultimos")
+    def api_ultimos():
+        limite = request.args.get("limite", 10, type=int)
+        tipo_fruta = request.args.get("tipo_fruta")
+        if tipo_fruta == "":
+            tipo_fruta = None
+
+        registros = obtener_ultimos_registros(db_path_efectivo, limite, tipo_fruta)
+        return jsonify(registros)
+
+    @app.get("/api/perfil")
+    def api_get_perfil():
+        return jsonify({"perfil": get_perfil()})
+
+    @app.post("/api/perfil")
+    def api_post_perfil():
+        datos = request.get_json(silent=True)
+        if not datos or "perfil" not in datos:
+            return jsonify({"error": "Falta perfil"}), 400
+        
+        perfil = datos["perfil"]
+        if perfil not in listar_nombres():
+            return jsonify({"error": "Perfil desconocido"}), 400
+            
+        set_perfil(perfil)
+        return jsonify({"status": "ok"})
+
+    @app.get("/api/perfiles")
+    def api_perfiles():
+        return jsonify(listar_nombres())
 
     @app.route("/video_feed")
     def video_feed():
