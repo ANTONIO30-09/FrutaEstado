@@ -72,7 +72,7 @@ def crear_app(db_path: str | None = None) -> Flask:
         if request.method == "POST":
             cam_ip = request.form.get("cam_ip", "0")
             cam_port = request.form.get("cam_port", "4747")
-            esp32_ip = request.form.get("esp32_ip", "")
+            esp32_ip = "192.168.1.100" # Valor por defecto, ya no se pide en la web
             
             if cam_ip == "0" or cam_ip == "":
                 cam_url = "0"
