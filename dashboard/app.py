@@ -1,3 +1,4 @@
+import time
 """Aplicación Flask del dashboard FrutaEstado.
 
 Expone:
