@@ -1,4 +1,3 @@
-import time
 """Aplicación Flask del dashboard FrutaEstado.
 
 Expone:
@@ -11,6 +10,7 @@ temporal en los tests, sin tocar data/frutas.db.
 """
 
 from __future__ import annotations
+import time
 import json
 from pathlib import Path
 
