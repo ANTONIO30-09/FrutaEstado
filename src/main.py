@@ -100,8 +100,13 @@ def _loop(cfg: Config) -> int:
             bbox = None
 
             if frame is not None:
-                # 1. YOLO detecta qué es y dónde está
-                det = detector.detectar_principal(frame)
+                contador_frames += 1
+                # Procesamos con YOLO solo 1 de cada 3 frames para ahorrar CPU
+                if contador_frames % 3 == 0:
+                    det = detector.detectar_principal(frame)
+                    ultima_deteccion = det
+                else:
+                    det = ultima_deteccion
                 
                 if det:
                     bbox = det.bbox

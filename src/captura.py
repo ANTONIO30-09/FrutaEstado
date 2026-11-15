@@ -38,6 +38,8 @@ class CapturaVideo:
         for intento in range(1, self.reintentos_max + 1):
             cap = cv2.VideoCapture(self.cam_url)
             if cap.isOpened():
+                # Evita que se acumulen frames viejos en memoria (Lag)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 self._cap = cap
                 return
             cap.release()
