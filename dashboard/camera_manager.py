@@ -12,7 +12,8 @@ from src.clasificador import clasificar_bbox, FiltroMayoria
 from src.perfiles_frutas import obtener_perfil
 from src.config import cargar_config
 from src.cliente_esp32 import enviar_estado
-from src.cliente_dashboard import enviar_registro
+# Importamos la función de la DB directamente para evitar peticiones HTTP a nosotros mismos
+from dashboard.db import insertar_registro
 
 log = logging.getLogger(__name__)
 
@@ -25,28 +26,32 @@ class CameraManager:
         self._lock = threading.Lock()
 
     def generar_frames(self):
+        print("[CÁMARA] Iniciando hilo de captura...")
         cfg = cargar_config()
         
-        # Leer config del JSON
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
         if config_path.exists():
             try:
                 web_cfg = json.loads(config_path.read_text())
                 cfg = replace(cfg, cam_url=web_cfg.get("cam_url", cfg.cam_url), esp32_ip=web_cfg.get("esp32_ip", cfg.esp32_ip))
-            except Exception:
-                pass
+                print(f"[CÁMARA] Conectando a: {cfg.cam_url}")
+            except Exception as e:
+                print(f"[CÁMARA] Error leyendo config: {e}")
 
         try:
             cap = CapturaVideo(cfg.cam_url)
             cap.abrir()
+            print("[CÁMARA] ¡Conexión exitosa a la cámara!")
         except Exception as e:
-            log.error(f"Error abriendo camara: {e}")
+            print(f"[CÁMARA] Error abriendo camara: {e}")
             self.running = False
             return
 
         self.detector = DetectorYOLO()
         filtro = FiltroMayoria(7)
         estado_anterior = None
+        contador = 0
+        ultima_deteccion = None
 
         while self.running:
             frame = cap.leer_frame()
@@ -54,8 +59,14 @@ class CameraManager:
                 time.sleep(0.1)
                 continue
 
-            # YOLO + HSV
-            det = self.detector.detectar_principal(frame)
+            contador += 1
+            # YOLO cada 3 frames
+            if contador % 3 == 0:
+                det = self.detector.detectar_principal(frame)
+                ultima_deteccion = det
+            else:
+                det = ultima_deteccion
+
             if det:
                 x1, y1, x2, y2 = det.bbox
                 h, w = frame.shape[:2]
@@ -71,24 +82,24 @@ class CameraManager:
                     estado = filtro.actualizar(res.estado)
                     
                     if estado and estado != estado_anterior:
-                        enviar_registro(
-                            host=cfg.flask_host, port=cfg.flask_port,
-                            estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada,
-                            tipo_fruta=tipo_fruta
-                        )
-                        enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
-                        estado_anterior = estado
+                        # Guardamos en DB directamente (sin petición HTTP)
+                        try:
+                            insertar_registro(cfg.db_path, estado, res.pct_verde, res.pct_madura, res.pct_pasada, tipo_fruta)
+                            enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
+                            estado_anterior = estado
+                        except Exception as e:
+                            print(f"[DB] Error: {e}")
 
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(frame, f"{tipo_fruta} | {estado or '-'}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-            # Convertir a JPEG y guardar
             ret, buffer = cv2.imencode('.jpg', frame)
             if ret:
                 with self._lock:
                     self.frame_actual = buffer.tobytes()
 
         cap.cerrar()
+        print("[CÁMARA] Hilo detenido.")
 
     def start(self):
         if not self.running:
