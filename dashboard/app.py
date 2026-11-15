@@ -10,6 +10,8 @@ temporal en los tests, sin tocar data/frutas.db.
 """
 
 from __future__ import annotations
+import json
+from pathlib import Path
 
 from pathlib import Path
 
