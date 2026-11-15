@@ -153,8 +153,8 @@ function actualizarSerie(serie) {
   if (!chartSerie) return;
   const mapa = new Map();
   for (const item of serie) {
-    const prev = mapa.get(item.minuto) || 0;
-    mapa.set(item.minuto, prev + item.conteo);
+    const prev = mapa.get(item.segundo) || 0;
+    mapa.set(item.segundo, prev + item.conteo);
   }
   const minutos = Array.from(mapa.keys()).sort();
   chartSerie.data.labels = minutos.map((m) => m.slice(11));
@@ -202,7 +202,7 @@ async function tick() {
     actualizarContadores(data.conteos);
     actualizarGauge(data.conteos);
     actualizarEstadoActual(data.ultimos);
-    actualizarSerie(data.serie_por_minuto);
+    actualizarSerie(data.serie_por_minuto_por_minuto);
     actualizarTabla(data.ultimos);
     setEstadoConexion(true, "Actualizado " + new Date().toLocaleTimeString());
   } catch (e) {
