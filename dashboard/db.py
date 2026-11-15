@@ -231,9 +231,8 @@ def obtener_ultimos_registros(
 
 
 def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
-    """Devuelve los registros agrupados por minuto, rellenando con 0 los vacíos.
-    
-    ventana_segundos por defecto es 86400 (24 horas).
+    """Devuelve los registros agrupados por minuto, rellenando huecos.
+    El rango de tiempo se adapta desde el primer hasta el último registro.
     """
     from src.config import cargar_config
     if db_path is None:
@@ -278,16 +277,15 @@ def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
     if not filas:
         return []
 
-    # Rellenar vacíos (para que se vea la montaña)
-    import time
-    ahora_min = (int(time.time()) // 60) * 60000
-    inicio_min = ahora_min - (ventana_segundos // 60) * 60000
-    
+    # Adaptamos el rango de tiempo a los datos reales
     datos_reales = {fila["timestamp_ms"]: fila for fila in filas}
-    resultado = []
+    min_ts = filas[0]["timestamp_ms"]
+    max_ts = filas[-1]["timestamp_ms"]
     
-    tiempo_actual = inicio_min
-    while tiempo_actual <= ahora_min:
+    # Rellenar solo entre min_ts y max_ts
+    resultado = []
+    tiempo_actual = min_ts
+    while tiempo_actual <= max_ts:
         if tiempo_actual in datos_reales:
             fila = datos_reales[tiempo_actual]
             resultado.append({"timestamp_ms": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})

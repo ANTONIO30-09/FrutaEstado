@@ -112,7 +112,7 @@ function initChartSerie() {
         backgroundColor: gradient, // Aplicamos el degradado
         fill: true, // Rellenar el área debajo de la línea
         tension: 0.4, // Curvatura suave (estilo colina)
-        pointRadius: 4,
+        pointRadius: 2,
         pointHoverRadius: 6,
         pointBackgroundColor: "#fff",
         pointBorderColor: "#4bb84b",
