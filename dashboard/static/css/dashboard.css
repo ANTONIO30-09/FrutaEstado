@@ -753,3 +753,24 @@ body::after {
   margin-top: 2rem !important;
   transform: none !important;
 }
+
+/* --- HACER LAS FRUTAS MÁS GRANDES Y CON SOMBRA --- */
+.fruit-img {
+  width: 85% !important; /* Aumentado del 65% al 85% */
+  height: 85% !important;
+}
+
+.fruit-img img, 
+.fruit-img svg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  /* Esta sombra respeta la forma del PNG */
+  filter: drop-shadow(0px 15px 25px rgba(0, 0, 0, 0.6)) !important; 
+  transition: transform 0.3s ease;
+}
+
+/* Opcional: un pequeño efecto al pasar el mouse */
+.fruit-img:hover img {
+  transform: scale(1.05);
+}
