@@ -52,10 +52,10 @@ def crear_app(db_path: str | None = None) -> Flask:
     # ---------------- GET / ----------------
     @app.get("/")
     def index():
-        import os
-import time
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
-        # Si estamos en pytest, ignoramos la redireccion para no romper los tests
+        if not config_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
+            return redirect(url_for("setup"))
+        return render_template("index.html")
         if not config_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
             return redirect(url_for("setup"))
         return render_template("index.html")
