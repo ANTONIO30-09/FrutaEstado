@@ -10,6 +10,11 @@ temporal en los tests, sin tocar data/frutas.db.
 """
 
 from __future__ import annotations
+from dashboard.db import (
+    init_db, insertar_registro, obtener_conteos,
+    obtener_ultimos, serie_por_minuto, serie_por_segundo
+)
+
 import time
 import json
 from pathlib import Path
@@ -24,7 +29,6 @@ from src.perfiles_frutas import PERFILES
 from dashboard.estado_compartido import (
     get_perfil as get_perfil_activo,
     set_perfil as set_perfil_activo,
-from dashboard.db import init_db, insertar_registro, obtener_conteos, obtener_ultimos, serie_por_minuto, serie_por_segundo
 
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
 
