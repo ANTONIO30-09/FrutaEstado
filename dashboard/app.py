@@ -47,6 +47,9 @@ def crear_app(db_path: str | None = None) -> Flask:
     # ---------------- GET / ----------------
     @app.get("/")
     def index():
+        config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
+        if not config_path.exists():
+            return redirect(url_for("setup"))
         return render_template("index.html")
 
     # ---------- POST /api/registro ----------
