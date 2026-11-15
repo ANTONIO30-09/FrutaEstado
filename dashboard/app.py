@@ -24,14 +24,7 @@ from src.perfiles_frutas import PERFILES
 from dashboard.estado_compartido import (
     get_perfil as get_perfil_activo,
     set_perfil as set_perfil_activo,
-)
-from dashboard.db import (
-    init_db, insertar_registro, obtener_conteos,
-    obtener_ultimos, serie_por_minuto, serie_por_segundo
-)
-)
-
-TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+from dashboard.db import init_db, insertar_registro, obtener_conteos, obtener_ultimos, serie_por_minuto, serie_por_segundo
 
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
 
@@ -72,7 +65,6 @@ def crear_app(db_path: str | None = None) -> Flask:
                     {"error": "El campo 'estado' debe ser 'S', 'A' o 'R'."}
                 ),
                 400,
-            )
 
         porcentajes: dict[str, float] = {}
         for campo in CAMPOS_PORCENTAJE:
@@ -81,14 +73,12 @@ def crear_app(db_path: str | None = None) -> Flask:
                 return (
                     jsonify({"error": f"Falta el campo '{campo}'."}),
                     400,
-                )
             try:
                 porcentajes[campo] = float(valor)
             except (TypeError, ValueError):
                 return (
                     jsonify({"error": f"El campo '{campo}' debe ser numérico."}),
                     400,
-                )
 
         tipo_fruta = str(datos.get("tipo_fruta", "desconocida")).strip() or "desconocida"
 
@@ -99,7 +89,6 @@ def crear_app(db_path: str | None = None) -> Flask:
             pct_pasada=porcentajes["pct_pasada"],
             tipo_fruta=tipo_fruta,
             db_path=db_path,
-        )
         return jsonify({"id": nuevo_id}), 201
 
     # ---------- GET /api/resumen ----------
@@ -120,7 +109,6 @@ def crear_app(db_path: str | None = None) -> Flask:
                 ),
                 "tipo_fruta": tipo_fruta,
             }
-        )
 
     # ---------- GET /api/perfil ----------
     @app.get("/api/perfil")
@@ -146,7 +134,6 @@ def crear_app(db_path: str | None = None) -> Flask:
                     }
                 ),
                 400,
-            )
         set_perfil_activo(nombre)
         return jsonify({"perfil": nombre}), 200
 
