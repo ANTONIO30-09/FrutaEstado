@@ -205,12 +205,19 @@ def crear_app(db_path: str | None = None) -> Flask:
     def video_feed():
         from flask import Response
         def generate():
-            while camera_manager.running:
-                frame = camera_manager.get_frame()
-                if frame:
-                    yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            while True:
+                # El bucle es infinito, pero solo envía frames si la cámara está activa
+                if camera_manager.running:
+                    frame = camera_manager.get_frame()
+                    if frame:
+                        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                    else:
+                        time.sleep(0.1)
                 else:
-                    time.sleep(0.1)
+                    # Si la cámara está apagada, esperamos y enviamos un frame en blanco o esperamos
+                    time.sleep(0.5)
+                    # No enviamos nada para que el navegador no se quede colgado
+                    continue
         return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     @app.route("/api/camera/start", methods=["POST"])
