@@ -774,3 +774,24 @@ body::after {
 .fruit-img:hover img {
   transform: scale(1.05);
 }
+
+/* --- Estilos del Logo --- */
+.header-logo {
+  height: 65px; /* Mucho más grande */
+  width: auto;
+  margin-right: -5px; /* Compactamos el espacio entre el logo y el texto */
+  margin-top: -10px; /* Lo subimos un poco para que se centre con el texto */
+  margin-bottom: -10px;
+  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.3));
+  transition: transform 0.3s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Espaciado compacto */
+}
+
+.brand h1 {
+  margin-top: 0.2rem;
+}
