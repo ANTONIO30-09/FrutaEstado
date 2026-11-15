@@ -289,7 +289,7 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
     resultado = []
     actual_dt = inicio_dt
     while actual_dt <= fin_dt:
-        tiempo_actual = actual_dt.isoformat(timespec='minutes') + 'Z'
+        tiempo_actual = actual_dt.strftime('%Y-%m-%dT%H:%M:00Z')
         if tiempo_actual in datos_reales:
             fila = datos_reales[tiempo_actual]
             resultado.append({"tiempo_str": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
