@@ -2,7 +2,7 @@
 
 Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de trabajo.
 
-**Última actualización:** Alineación del pipeline con LEDs del ESP32 (colores) + timeout subido a 1.5s
+**Última actualización:** Migración a FrutaEstadoOficial + versionado del firmware ESP32
 
 ---
 
@@ -85,6 +85,15 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 
 ---
 
+### Sesión 2026-11-14 — Migración y versionado de firmware
+
+- [x] Detectado que el repositorio vivía en Hito 5/ y el proyecto se había movido a Hito 5/FrutaEstado/ sin reindexar.
+- [x] Reclonado limpio desde origin/dev en Hito 5/FrutaEstadoOficial/ (nueva carpeta de trabajo).
+- [x] Verificado con diff que los archivos rastreados son idénticos a origin/dev.
+- [x] Rescatado firmware/esp32_clasificador/ desde la copia local, excluyendo .pio/ (40 MB).
+- [x] Ampliado .gitignore con reglas para firmware ESP32 (pio, secrets.h, build).
+- [x] Verificado con git add -n que secrets.h (credenciales WiFi) no entra al repo.
+
 ## Decisiones técnicas tomadas
 
 | Fecha | Decisión | Motivo |
@@ -104,18 +113,19 @@ Bitácora del estado del proyecto. Se actualiza al cierre de cada sesión de tra
 | S5 | Flask con `debug=False` y `use_reloader=False` en `app.py` y `run.py` | El reloader reiniciaba el server en cada guardado y perdía el perfil activo. Crítico para demos en vivo. |
 | S5 | Polling de `/api/perfil` cada 2 s desde `src/main.py` | Permite hot-swap del perfil de fruta sin reiniciar el script de visión. |
 
+| S6 | Proyecto migrado a `FrutaEstadoOficial/` (clon limpio) | El repo estaba en Hito 5/ con el código movido; clonar evita reescribir historial. |
+| S6 | Firmware ESP32 versionado excluyendo `secrets.h` y `.pio/` | Entregable no versionado; secrets.h tiene credenciales reales; .pio/ son 40 MB de build. |
+
 ---
 
 ## Próximos pasos inmediatos
 
-1. **PR de `feat/rediseno-visual` hacia `dev`** (base = `dev`, NO `main`).
-2. **Mergear el PR** una vez verificado.
-3. **Borrar la rama `feat/rediseno-visual`** (local y remota) tras el merge.
-4. **Prueba end-to-end con ESP32 real** cuando el compañero lo tenga listo.
-5. **Ajustar umbrales HSV** si la clasificación real falla con frutas físicas.
-6. **Documentación final** (`README.md` extendido + `docs/decisiones.md`).
-7. **Preparar demo en vivo** e **informe .docx**.
-
+1. **Integrar YOLO** (`ultralytics`) como detector de tipo de fruta.
+2. **Pipeline híbrido** YOLO (tipo + bbox) hacia HSV (estado).
+3. **Migrar `config/perfiles_custom.json`** al formato anidado.
+4. **Prueba end-to-end con ESP32 real**.
+5. **Despliegue**: Docker para dashboard + systemd para main.py.
+6. **Documentación final**. 
 ---
 
 ## Notas operativas

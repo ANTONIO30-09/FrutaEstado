@@ -77,3 +77,39 @@ Ambas IPs (y la URL completa del stream) se leen desde variables de entorno carg
 - Evita hardcodear IPs en medio del código (regla explícita del proyecto).
 - El `.env.example` versionado documenta las variables sin exponer valores reales.
 - Cambiar de red no requiere tocar código, solo el `.env`.
+
+
+---
+
+## D-004: Migración del proyecto a FrutaEstadoOficial
+
+**Fecha:** Sesión 2026-11-14
+**Estado:** Aceptada
+
+### Contexto
+El repositorio git vivía en Hito 5, pero el proyecto se movió a Hito 5/FrutaEstado sin reindexar. git status mostraba 48 borrados y 90 untracked.
+
+### Decisión
+Reclonar limpio desde origin/dev en Hito 5/FrutaEstadoOficial.
+
+### Justificación
+- diff confirmó que los archivos rastreados eran idénticos a origin/dev.
+- Cero riesgo de reescribir historial. FrutaEstado/ queda como respaldo.
+
+---
+
+## D-005: Versionar el firmware ESP32 excluyendo secrets.h y .pio/
+
+**Fecha:** Sesión 2026-11-14
+**Estado:** Aceptada
+
+### Contexto
+firmware/esp32_clasificador/ (PlatformIO) es entregable del Hito 5 y no estaba en GitHub. Contiene credenciales en secrets.h y 40 MB de artefactos en .pio/.
+
+### Decisión
+Versionar el firmware añadiendo al .gitignore las reglas para ignorar .pio/, secrets.h y build/.
+
+### Justificación
+- secrets.h expone credenciales WiFi reales.
+- secrets.h.example documenta el formato sin exponer valores.
+- .pio/ es regenerable con pio run.
