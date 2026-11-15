@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Encender
                 btnCam.textContent = "Iniciando...";
                 await fetch("/api/camera/start", { method: "POST" });
-                videoStream.src = "/video_feed";
+                videoStream.src = "/video_feed?t=" + new Date().getTime();
                 videoStream.style.display = "block";
                 placeholder.style.display = "none";
                 btnCam.textContent = "Apagar Cámara";
