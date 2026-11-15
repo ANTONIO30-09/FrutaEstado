@@ -230,7 +230,7 @@ def obtener_ultimos_registros(
     return [dict(fila) for fila in filas]
 
 
-def serie_por_segundo(db_path=None, ventana_segundos=60, tipo_fruta=None):
+def serie_por_segundo(db_path=None, ventana_segundos=3600, tipo_fruta=None):
     """Devuelve los registros agrupados por segundo y estado, con timestamp en ms."""
     from src.config import cargar_config
     if db_path is None:

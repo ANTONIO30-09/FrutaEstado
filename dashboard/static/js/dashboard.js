@@ -201,9 +201,9 @@ function actualizarTabla(ultimos) {
       "<td>" + hora + "</td>" +
       '<td><span class="' + clase + '">' + est.texto + "</span></td>" +
       "<td>" + (r.tipo_fruta || "desconocida") + "</td>" +
-      "<td>" + r.pct_verde.toFixed(1) + "%</td>" +
-      "<td>" + r.pct_madura.toFixed(1) + "%</td>" +
-      "<td>" + r.pct_pasada.toFixed(1) + "%</td>";
+      "<td>" + (r.pct_verde || 0).toFixed(1) + "%</td>" +
+      "<td>" + (r.pct_madura || 0).toFixed(1) + "%</td>" +
+      "<td>" + (r.pct_pasada || 0).toFixed(1) + "%</td>";
     tbody.appendChild(tr);
   }
 }
