@@ -62,3 +62,5 @@ FETCH_HEAD
 firmware/**/.pio/
 firmware/**/secrets.h
 firmware/**/build/
+
+*.pt
