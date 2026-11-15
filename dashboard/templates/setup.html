@@ -85,16 +85,16 @@
       
       <form method="POST" action="/setup">
         <div class="form-group">
-          <label for="cam_url">URL de la Cámara (DroidCam o Webcam)</label>
-          <input type="text" id="cam_url" name="cam_url" value="{{ config.cam_url }}" placeholder="Ej: http://192.168.1.50:4747/video o 0">
+          <label for="cam_ip">IP de la Cámara (DroidCam) o 0 para Webcam</label>
+          <input type="text" id="cam_ip" name="cam_ip" value="{{ config.cam_ip }}" placeholder="Ej: 192.168.1.3 o 0">
+        </div>
+        <div class="form-group">
+          <label for="cam_port">Puerto de la Cámara</label>
+          <input type="text" id="cam_port" name="cam_port" value="{{ config.cam_port }}" placeholder="Ej: 4747">
         </div>
         <div class="form-group">
           <label for="esp32_ip">IP del ESP32</label>
           <input type="text" id="esp32_ip" name="esp32_ip" value="{{ config.esp32_ip }}" placeholder="Ej: 192.168.1.100">
-        </div>
-        <div class="form-group">
-          <label for="mask">Máscara de Red</label>
-          <input type="text" id="mask" name="mask" value="{{ config.mask }}" placeholder="Ej: 255.255.255.0">
         </div>
         
         <button type="submit" class="btn-primary">Guardar y Entrar al Dashboard</button>

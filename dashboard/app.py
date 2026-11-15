@@ -156,20 +156,41 @@ def crear_app(db_path: str | None = None) -> Flask:
     @app.route("/setup", methods=["GET", "POST"])
     def setup():
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
-        config_actual = {"cam_url": "0", "esp32_ip": "192.168.1.100", "mask": "255.255.255.0"}
+        # Leemos la config actual
+        cam_ip = "0"
+        cam_port = "4747"
+        esp32_ip = "192.168.1.100"
         
         if config_path.exists():
             try:
-                config_actual.update(json.loads(config_path.read_text()))
+                saved = json.loads(config_path.read_text())
+                esp32_ip = saved.get("esp32_ip", esp32_ip)
+                # Extraemos IP y puerto si ya estaban guardados
+                if "cam_url" in saved and "http://" in saved["cam_url"]:
+                    parts = saved["cam_url"].replace("http://", "").replace("/video", "").split(":")
+                    cam_ip = parts[0]
+                    if len(parts) > 1: cam_port = parts[1]
+                elif saved.get("cam_url") == "0":
+                    cam_ip = "0"
             except Exception:
                 pass
+
+        config_actual = {"cam_ip": cam_ip, "cam_port": cam_port, "esp32_ip": esp32_ip}
                 
         if request.method == "POST":
-            config_actual["cam_url"] = request.form.get("cam_url", "")
-            config_actual["esp32_ip"] = request.form.get("esp32_ip", "")
-            config_actual["mask"] = request.form.get("mask", "")
+            cam_ip = request.form.get("cam_ip", "0")
+            cam_port = request.form.get("cam_port", "4747")
+            esp32_ip = request.form.get("esp32_ip", "")
+            
+            # Armamos la URL completa para el main.py
+            if cam_ip == "0" or cam_ip == "":
+                cam_url = "0"
+            else:
+                cam_url = f"http://{cam_ip}:{cam_port}/video"
+                
+            config_guardar = {"cam_url": cam_url, "esp32_ip": esp32_ip}
             config_path.parent.mkdir(parents=True, exist_ok=True)
-            config_path.write_text(json.dumps(config_actual, indent=2))
+            config_path.write_text(json.dumps(config_guardar, indent=2))
             return redirect(url_for("index"))
             
         return render_template("setup.html", config=config_actual)
