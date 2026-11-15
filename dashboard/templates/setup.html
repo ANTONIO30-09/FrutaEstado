@@ -35,7 +35,7 @@
     <h2>Configurar Cámara</h2>
     <p>Ingresa los datos de tu celular (DroidCam)</p>
     
-    <form id="setup-form">
+    <form id="setup-form" method="POST" action="/setup">
       <div class="form-group">
         <label for="cam_ip">IP de la Cámara (o 0 para webcam local)</label>
         <input type="text" id="cam_ip" name="cam_ip" value="{{ config.cam_ip }}" placeholder="Ej: 192.168.1.3" required>
