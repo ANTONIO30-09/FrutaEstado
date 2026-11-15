@@ -133,10 +133,13 @@ class CameraManager:
                     texto = f"{mejor_perfil} | {estado_es}"
                     cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-            ret, buffer = cv2.imencode('.jpg', frame)
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
             if ret:
                 with self._lock:
                     self.frame_actual = buffer.tobytes()
+
+            # FRENO DE MANO: Dormimos el hilo para no saturar el procesador
+            time.sleep(0.05) 
 
         cap.cerrar()
         print("[CÁMARA] Hilo detenido.")
