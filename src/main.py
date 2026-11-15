@@ -53,17 +53,19 @@ def _resolver_perfil_yolo(clase_yolo: str, roi: np.ndarray) -> tuple[str, Result
 def _loop(cfg: Config) -> int:
     # --- LEER CONFIGURACIÓN DESDE LA WEB ---
     import json
+    from dataclasses import replace
     from pathlib import Path
+    
     config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
     if config_path.exists():
         try:
             web_cfg = json.loads(config_path.read_text())
-            if web_cfg.get("cam_url"):
-                cfg.cam_url = web_cfg["cam_url"]
-            if web_cfg.get("esp32_ip"):
-                cfg.esp32_ip = web_cfg["esp32_ip"]
-        except Exception:
-            pass
+            cam_url = web_cfg.get("cam_url") or cfg.cam_url
+            esp32_ip = web_cfg.get("esp32_ip") or cfg.esp32_ip
+            # Al ser una dataclass frozen, usamos replace para generar una nueva
+            cfg = replace(cfg, cam_url=cam_url, esp32_ip=esp32_ip)
+        except Exception as e:
+            print(f"[WARN] No se pudo leer la configuración web: {e}")
 
     try:
         captura = CapturaVideo(cfg.cam_url)
