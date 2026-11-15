@@ -138,10 +138,10 @@ def test_index_incluye_elementos_clave(cliente):
     """El rediseno glass reemplazo el doughnut por un gauge SVG."""
     r = cliente.get("/")
     html = r.data
-    # Gauge SVG (los 3 arcos)
-    assert b'id="arc-s"' in html
-    assert b'id="arc-a"' in html
-    assert b'id="arc-r"' in html
+    # Reproductor de video y botones
+    assert b'id="video-stream"' in html
+    assert b'id="btn-camara"' in html
+    assert b'id="video-placeholder"' in html
     # Grafica de linea
     assert b'id="chart-serie"' in html
     # Tabla del panel flotante
