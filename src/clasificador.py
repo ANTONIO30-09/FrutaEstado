@@ -62,6 +62,9 @@ def clasificar_frame(
         perfil = obtener_perfil(None)
 
     roi, _ = _extraer_roi(frame, perfil)
+    return _clasificar_roi(roi, perfil, perfil.nombre)
+
+def _clasificar_roi(roi: np.ndarray, perfil: PerfilFruta, nombre_perfil: str) -> ResultadoClasificacion:
     hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
     h = hsv[:, :, 0].astype(np.int16)
@@ -72,7 +75,7 @@ def clasificar_frame(
     total_fruta = int(mascara_fruta.sum())
 
     if total_fruta == 0:
-        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0, perfil.nombre)
+        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0, nombre_perfil)
 
     # Orden: pasada -> verde -> madura.
     # Razon: en algunos perfiles (platano, mandarina) el H bajo puede ser
@@ -107,7 +110,7 @@ def clasificar_frame(
 
     if total_clasificado == 0:
         return ResultadoClasificacion(
-            None, 0.0, 0.0, 0.0, total_fruta, perfil.nombre
+            None, 0.0, 0.0, 0.0, total_fruta, nombre_perfil
         )
 
     pct_verde = 100.0 * n_verde / total_clasificado
@@ -122,7 +125,7 @@ def clasificar_frame(
         estado = "R"
 
     return ResultadoClasificacion(
-        estado, pct_verde, pct_madura, pct_pasada, total_fruta, perfil.nombre
+        estado, pct_verde, pct_madura, pct_pasada, total_fruta, nombre_perfil
     )
 
 
@@ -238,3 +241,18 @@ def _demo(config: Config) -> int:
 
 if __name__ == "__main__":
     sys.exit(_demo(cargar_config()))
+
+def clasificar_bbox(
+    frame: np.ndarray, bbox: tuple[int, int, int, int], perfil: PerfilFruta
+) -> ResultadoClasificacion:
+    """Clasifica una región específica (bounding box) usando la lógica HSV."""
+    h, w = frame.shape[:2]
+    x1, y1, x2, y2 = bbox
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w, x2), min(h, y2)
+    
+    if x2 <= x1 or y2 <= y1:
+        return ResultadoClasificacion(None, 0.0, 0.0, 0.0, 0, nombre_perfil)
+
+    roi = frame[y1:y2, x1:x2]
+    return _clasificar_roi(roi, perfil, perfil.nombre)
