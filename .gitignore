@@ -57,3 +57,8 @@ logs/
 
 # Git internals que pueden colarse si se redirige salida de git
 FETCH_HEAD
+
+# --- Firmware ESP32 (PlatformIO) ---
+firmware/**/.pio/
+firmware/**/secrets.h
+firmware/**/build/
