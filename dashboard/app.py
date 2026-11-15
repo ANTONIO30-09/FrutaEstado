@@ -2,8 +2,10 @@ from __future__ import annotations
 import os
 import time
 import json
+import firebase_admin
+from firebase_admin import credentials, auth
 from pathlib import Path
-from flask import Flask, jsonify, render_template, request, redirect, url_for, Response
+from flask import Flask, jsonify, render_template, request, redirect, url_for, Response, session
 from flask_cors import CORS
 
 from dashboard.db import (
@@ -15,10 +17,22 @@ from dashboard.camera_manager import CameraManager
 from src.perfiles_frutas import listar_nombres
 
 camera_manager = CameraManager()
+
+try:
+    firebase_key_path = Path(__file__).resolve().parent.parent / "config" / "firebase_key.json"
+    if firebase_key_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
+        cred = credentials.Certificate(str(firebase_key_path))
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+except Exception as e:
+    print(f"[FIREBASE] Advertencia: {e}")
+
+
 CAMPOS_PORCENTAJE = ("pct_verde", "pct_madura", "pct_pasada")
 
 def crear_app(db_path: str | None = None) -> Flask:
     app = Flask(__name__)
+    app.secret_key = 'frutaestado_secret_key_super_segura'
     CORS(app)
 
     db_path_efectivo = db_path or "data/frutas.db"
@@ -26,6 +40,8 @@ def crear_app(db_path: str | None = None) -> Flask:
 
     @app.route("/")
     def index():
+        if 'user' not in session:
+            return redirect(url_for('login'))
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
         if not config_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
             return redirect(url_for("setup"))
@@ -176,5 +192,29 @@ def crear_app(db_path: str | None = None) -> Flask:
     @app.route("/api/camera/status")
     def api_camera_status():
         return jsonify({"running": camera_manager.running})
+
+
+    @app.route("/login")
+    def login():
+        return render_template("login.html")
+
+    @app.route("/logout")
+    def logout():
+        session.pop('user', None)
+        return redirect(url_for('login'))
+
+    @app.route("/api/login", methods=["POST"])
+    def api_login():
+        data = request.get_json()
+        token = data.get("token")
+        if not token:
+            return jsonify({"error": "Token faltante"}), 400
+        try:
+            # Verificamos el token con Firebase Admin
+            decoded_token = auth.verify_id_token(token)
+            session['user'] = decoded_token.get('email', decoded_token['uid'])
+            return jsonify({"status": "ok"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 401
 
     return app
