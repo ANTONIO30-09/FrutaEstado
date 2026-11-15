@@ -414,9 +414,9 @@ body::after {
   font-size: 0.75rem;
 }
 
-.badge.s { background: var(--emerald); color: #fff; }
-.badge.a { background: var(--mint); }
-.badge.r { background: var(--forest); color: #fff; }
+.badge.s { background: #4bb84b !important; color: #fff; }
+.badge.a { background: #ffd700 !important; color: #104010; }
+.badge.r { background: #ff4b4b !important; color: #fff; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {

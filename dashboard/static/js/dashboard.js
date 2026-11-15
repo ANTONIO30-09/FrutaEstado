@@ -162,8 +162,10 @@ function actualizarSerie(serie) {
   if (!chartSerie) return;
   const mapa = new Map();
   for (const item of serie) {
-    // Ahora db.py devuelve timestamp_ms directamente
+    // db.py ahora envía timestamp_ms directamente
     const tiempoMs = item.timestamp_ms;
+    if (!tiempoMs) continue;
+    
     const prev = mapa.get(tiempoMs) || 0;
     mapa.set(tiempoMs, prev + item.conteo);
   }
