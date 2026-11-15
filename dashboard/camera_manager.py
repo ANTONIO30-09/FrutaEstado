@@ -86,26 +86,52 @@ class CameraManager:
                 roi = frame[y1:y2, x1:x2]
                 
                 if roi.size > 0:
-                    tipo_fruta = det.clase_yolo
-                    perfil = obtener_perfil(tipo_fruta)
-                    perfil_bbox = replace(perfil, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
-                    res = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
+                    # Resolvemos los subtipos usando HSV
+                    perfiles_candidatos = []
+                    clase_yolo = det.clase_yolo.lower()
                     
+                    if clase_yolo == "apple":
+                        perfiles_candidatos = ["manzana_roja", "manzana_verde"]
+                    elif clase_yolo == "orange":
+                        perfiles_candidatos = ["mandarina"]
+                    elif clase_yolo == "banana":
+                        perfiles_candidatos = ["platano"]
+                    else:
+                        # Si no es una fruta conocida, usamos default
+                        perfiles_candidatos = ["default"]
+
+                    mejor_perfil = "desconocida"
+                    mejor_res = None
+                    max_pixeles = -1
+
+                    # Probamos los colores para ver cuál encaja mejor
+                    for p_nombre in perfiles_candidatos:
+                        perfil_t = obtener_perfil(p_nombre)
+                        perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
+                        res_temp = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
+                        
+                        if res_temp.pixeles_fruta > max_pixeles:
+                            max_pixeles = res_temp.pixeles_fruta
+                            mejor_perfil = p_nombre
+                            mejor_res = res_temp
+
+                    res = mejor_res
                     estado = filtro.actualizar(res.estado)
                     
                     if estado and estado != estado_anterior:
-                        # Guardamos en DB directamente (sin petición HTTP)
+                        # Guardamos el nombre del perfil (ej. "manzana_roja") en la DB para que el filtro funcione
                         try:
-                            insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=tipo_fruta, db_path=cfg.db_path)
+                            insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
                             enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
                             estado_anterior = estado
                         except Exception as e:
                             print(f"[DB] Error: {e}")
 
+                    # Dibujamos en el video el nombre del perfil (ej. "manzana_verde")
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    fruta_es = MAPEO_FRUTAS.get(tipo_fruta.lower(), "Fruta")
                     estado_es = ESTADOS_ES.get(estado, "-")
-                    cv2.putText(frame, f"{fruta_es} | {estado_es}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    texto = f"{mejor_perfil} | {estado_es}"
+                    cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
             ret, buffer = cv2.imencode('.jpg', frame)
             if ret:
