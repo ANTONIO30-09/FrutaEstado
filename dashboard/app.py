@@ -26,12 +26,8 @@ from dashboard.estado_compartido import (
     set_perfil as set_perfil_activo,
 )
 from dashboard.db import (
-    init_db,
-    insertar_registro,
-    obtener_conteos,
-    obtener_ultimos,
-    serie_por_minuto,
-    serie_por_segundo
+    init_db, insertar_registro, obtener_conteos,
+    obtener_ultimos, serie_por_minuto, serie_por_segundo
 )
 )
 
