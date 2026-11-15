@@ -7,7 +7,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, R
 from flask_cors import CORS
 
 from dashboard.db import (
-    init_db, insertar_registro, obtener_conteos,
+    init_db, insertar_registro, obtener_conteos_por_estado,
     obtener_ultimos, serie_por_minuto, serie_por_segundo
 )
 from dashboard.camera_manager import CameraManager
@@ -103,7 +103,7 @@ def crear_app(db_path: str | None = None) -> Flask:
         if tipo_fruta == "":
             tipo_fruta = None
 
-        conteos = obtener_conteos(db_path_efectivo, tipo_fruta)
+        conteos = obtener_conteos_por_estado(db_path_efectivo, tipo_fruta)
         
         # Intentamos usar la nueva función por segundos si estamos en la web,
         # pero mantenemos compatibilidad con el test que pide por minuto
