@@ -153,12 +153,20 @@ function actualizarSerie(serie) {
   if (!chartSerie) return;
   const mapa = new Map();
   for (const item of serie) {
-    const prev = mapa.get(item.segundo) || 0;
-    mapa.set(item.segundo, prev + item.conteo);
+    // item.segundo viene como "HH:MM:SS", lo convertimos a un objeto Date para Chart.js
+    const fecha = new Date();
+    const [h, m, s] = item.segundo.split(':');
+    fecha.setHours(h, m, s, 0);
+    const tiempoMs = fecha.getTime();
+    const prev = mapa.get(tiempoMs) || 0;
+    mapa.set(tiempoMs, prev + item.conteo);
   }
-  const minutos = Array.from(mapa.keys()).sort();
-  chartSerie.data.labels = minutos.map((m) => m.slice(11));
-  chartSerie.data.datasets[0].data = minutos.map((m) => mapa.get(m));
+  // Ordenamos por tiempo
+  const tiempos = Array.from(mapa.keys()).sort((a, b) => a - b);
+  // Chart.js espera un array de objetos {x: timestamp, y: valor} para escalas de tiempo
+  const datos = tiempos.map(t => ({ x: t, y: mapa.get(t) }));
+  
+  chartSerie.data.datasets[0].data = datos;
   chartSerie.update();
 }
 
@@ -202,7 +210,7 @@ async function tick() {
     actualizarContadores(data.conteos);
     actualizarGauge(data.conteos);
     actualizarEstadoActual(data.ultimos);
-    actualizarSerie(data.serie_por_minuto_por_minuto);
+    actualizarSerie(data.serie_por_minuto);
     actualizarTabla(data.ultimos);
     setEstadoConexion(true, "Actualizado " + new Date().toLocaleTimeString());
   } catch (e) {
