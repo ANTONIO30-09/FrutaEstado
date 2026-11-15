@@ -64,3 +64,5 @@ firmware/**/secrets.h
 firmware/**/build/
 
 *.pt
+
+config/dispositivos.json
