@@ -231,70 +231,90 @@ def obtener_ultimos_registros(
 
 
 def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
-    """Devuelve registros por minuto. Guarda y consulta en UTC."""
+    """Agrupa por segundo, minuto u hora dependiendo del rango de datos."""
     from src.config import cargar_config
+    from datetime import datetime, timedelta
+    
     if db_path is None:
         db_path = cargar_config().db_path
         
     conn = conectar(db_path)
     try:
-        # Usamos formato ISO 8601 con 'Z' (UTC) para que JS lo entienda perfecto
-        if tipo_fruta is None:
-            filas = conn.execute(
-                """
-                SELECT 
-                    strftime('%Y-%m-%dT%H:%M:00Z', timestamp) AS tiempo_str,
-                    SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
-                    SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
-                    SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
-                FROM registros
-                WHERE timestamp >= datetime('now', ?)
-                GROUP BY tiempo_str
-                ORDER BY tiempo_str ASC
-                """,
-                (f"-{int(ventana_segundos)} seconds",),
-            ).fetchall()
+        # 1. Buscamos el registro más antiguo (dentro de la ventana) y el más reciente
+        query_rango = "SELECT MIN(timestamp), MAX(timestamp) FROM registros WHERE timestamp >= datetime('now', ?)"
+        params_rango = [f"-{int(ventana_segundos)} seconds"]
+        if tipo_fruta:
+            query_rango += " AND tipo_fruta = ?"
+            params_rango.append(tipo_fruta)
+            
+        rango = conn.execute(query_rango, params_rango).fetchone()
+        if not rango or not rango[0]:
+            return []
+            
+        str_min, str_max = rango[0], rango[1]
+        dt_min = datetime.strptime(str_min, '%Y-%m-%d %H:%M:%S')
+        dt_max = datetime.strptime(str_max, '%Y-%m-%d %H:%M:%S')
+        
+        # 2. Calculamos cuántos minutos han pasado para elegir la escala
+        diff_minutos = (dt_max - dt_min).total_seconds() / 60
+        
+        if diff_minutos <= 15:
+            agrupar_por = "segundos"
+            sql_group = "strftime('%Y-%m-%dT%H:%M:%SZ', timestamp)"
+            delta = timedelta(seconds=1)
+            formato = '%Y-%m-%dT%H:%M:%SZ'
+        elif diff_minutos <= 180: # Hasta 3 horas
+            agrupar_por = "minutos"
+            sql_group = "strftime('%Y-%m-%dT%H:%M:00Z', timestamp)"
+            delta = timedelta(minutes=1)
+            formato = '%Y-%m-%dT%H:%M:00Z'
         else:
-            filas = conn.execute(
-                """
-                SELECT 
-                    strftime('%Y-%m-%dT%H:%M:00Z', timestamp) AS tiempo_str,
-                    SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
-                    SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
-                    SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
-                FROM registros
-                WHERE timestamp >= datetime('now', ?)
-                  AND tipo_fruta = ?
-                GROUP BY tiempo_str
-                ORDER BY tiempo_str ASC
-                """,
-                (f"-{int(ventana_segundos)} seconds", tipo_fruta),
-            ).fetchall()
+            agrupar_por = "horas"
+            sql_group = "strftime('%Y-%m-%dT%H:00:00Z', timestamp)"
+            delta = timedelta(hours=1)
+            formato = '%Y-%m-%dT%H:00:00Z'
+
+        print(f"[GRÁFICA] Agrupando por {agrupar_por} (rango de {diff_minutos:.1f} min)")
+
+        # 3. Traemos los datos agrupados según la escala elegida
+        query_datos = f"""
+            SELECT 
+                {sql_group} AS tiempo_str,
+                SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
+                SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
+                SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
+            FROM registros
+            WHERE timestamp >= datetime('now', ?)
+        """
+        params_datos = [f"-{int(ventana_segundos)} seconds"]
+        if tipo_fruta:
+            query_datos += " AND tipo_fruta = ?"
+            params_datos.append(tipo_fruta)
+            
+        query_datos += f" GROUP BY tiempo_str ORDER BY tiempo_str ASC"
+        filas = conn.execute(query_datos, params_datos).fetchall()
+        
     finally:
         conn.close()
     
     if not filas:
         return []
 
-    from datetime import datetime, timedelta
+    # 4. Rellenar los vacíos (para que se vean las montañas)
     datos_reales = {fila["tiempo_str"]: fila for fila in filas}
     
-    inicio_str = filas[0]["tiempo_str"]
-    fin_str = filas[-1]["tiempo_str"]
-    
-    # Parseamos el tiempo quitando la 'Z' para operar
-    inicio_dt = datetime.fromisoformat(inicio_str.replace('Z', ''))
-    fin_dt = datetime.fromisoformat(fin_str.replace('Z', ''))
-    
+    inicio_dt = datetime.strptime(str_min, '%Y-%m-%d %H:%M:%S').replace(minute=0, second=0) if agrupar_por == "horas" else datetime.strptime(str_min, '%Y-%m-%d %H:%M:%S').replace(second=0) if agrupar_por == "minutos" else datetime.strptime(str_min, '%Y-%m-%d %H:%M:%S')
+    fin_dt = datetime.strptime(str_max, '%Y-%m-%d %H:%M:%S').replace(minute=0, second=0) if agrupar_por == "horas" else datetime.strptime(str_max, '%Y-%m-%d %H:%M:%S').replace(second=0) if agrupar_por == "minutos" else datetime.strptime(str_max, '%Y-%m-%d %H:%M:%S')
+
     resultado = []
     actual_dt = inicio_dt
     while actual_dt <= fin_dt:
-        tiempo_actual = actual_dt.strftime('%Y-%m-%dT%H:%M:00Z')
+        tiempo_actual = actual_dt.strftime(formato)
         if tiempo_actual in datos_reales:
             fila = datos_reales[tiempo_actual]
             resultado.append({"tiempo_str": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
         else:
             resultado.append({"tiempo_str": tiempo_actual, "S": 0, "A": 0, "R": 0, "conteo": 0})
-        actual_dt += timedelta(minutes=1)
+        actual_dt += delta
         
     return resultado
