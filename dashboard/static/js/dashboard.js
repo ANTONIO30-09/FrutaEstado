@@ -96,6 +96,12 @@ function actualizarEstadoActual(ultimos) {
 // ---------- Gráfica de línea ----------
 function initChartSerie() {
   const ctx = document.getElementById("chart-serie").getContext("2d");
+  
+  // Creamos un degradado verde para el efecto "montaña"
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, "rgba(75, 184, 75, 0.8)"); // Verde intenso arriba
+  gradient.addColorStop(1, "rgba(75, 184, 75, 0.0)"); // Transparente abajo
+
   chartSerie = new Chart(ctx, {
     type: "line",
     data: {
@@ -103,19 +109,27 @@ function initChartSerie() {
         label: "Registros",
         data: [],
         borderColor: "#4bb84b",
-        backgroundColor: "rgba(75,184,75,0.15)",
-        fill: true,
-        tension: 0.3,
-        pointRadius: 3,
-        pointBackgroundColor: "#4bb84b",
-        pointBorderColor: "#104010",
-        pointBorderWidth: 1,
-        borderWidth: 2.5,
+        backgroundColor: gradient, // Aplicamos el degradado
+        fill: true, // Rellenar el área debajo de la línea
+        tension: 0.4, // Curvatura suave (estilo colina)
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#4bb84b",
+        pointBorderWidth: 2,
+        borderWidth: 3,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }, // Ocultamos la leyenda para que se vea más limpio
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+        }
+      },
       scales: {
         x: {
           type: 'time',
@@ -131,6 +145,8 @@ function initChartSerie() {
             color: "rgba(255,255,255,0.65)",
             font: { family: "Inter", size: 11 },
             maxRotation: 0,
+            autoSkip: true, // Evita que se amontonen las horas
+            maxTicksLimit: 8 // Máximo 8 etiquetas en el eje X
           },
           grid: { color: "rgba(255,255,255,0.08)", drawBorder: false },
         },
@@ -138,20 +154,11 @@ function initChartSerie() {
           beginAtZero: true,
           ticks: {
             color: "rgba(255,255,255,0.65)",
-            precision: 0,
+            precision: 0, // Solo números enteros
             font: { family: "Inter", size: 11 },
+            stepSize: 1 // Salto de 1 en 1
           },
           grid: { color: "rgba(255,255,255,0.08)", drawBorder: false },
-        },
-      },
-      plugins: {
-        legend: {
-          labels: {
-            color: "rgba(255,255,255,0.85)",
-            font: { family: "Inter", size: 12, weight: 500 },
-            usePointStyle: true,
-            pointStyle: "circle",
-          },
         },
       },
     },
