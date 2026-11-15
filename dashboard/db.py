@@ -230,28 +230,27 @@ def obtener_ultimos_registros(
     return [dict(fila) for fila in filas]
 
 
-def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
-    """Devuelve los registros agrupados por minuto, rellenando huecos.
-    El rango de tiempo se adapta desde el primer hasta el último registro.
-    """
+def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
+    """Devuelve registros por minuto. Ventana por defecto: 4 horas (14400s)."""
     from src.config import cargar_config
     if db_path is None:
         db_path = cargar_config().db_path
         
     conn = conectar(db_path)
     try:
+        # Usamos el formato ISO directamente para evitar problemas de timezone
         if tipo_fruta is None:
             filas = conn.execute(
                 """
                 SELECT 
-                    CAST(strftime('%s', timestamp) AS INTEGER) / 60 * 60000 AS timestamp_ms,
+                    strftime('%Y-%m-%dT%H:%M:00', timestamp) AS tiempo_str,
                     SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
                     SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
                     SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
-                GROUP BY timestamp_ms
-                ORDER BY timestamp_ms ASC
+                GROUP BY tiempo_str
+                ORDER BY tiempo_str ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds",),
             ).fetchall()
@@ -259,15 +258,15 @@ def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
             filas = conn.execute(
                 """
                 SELECT 
-                    CAST(strftime('%s', timestamp) AS INTEGER) / 60 * 60000 AS timestamp_ms,
+                    strftime('%Y-%m-%dT%H:%M:00', timestamp) AS tiempo_str,
                     SUM(CASE WHEN estado='S' THEN 1 ELSE 0 END) AS S,
                     SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
                     SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
                   AND tipo_fruta = ?
-                GROUP BY timestamp_ms
-                ORDER BY timestamp_ms ASC
+                GROUP BY tiempo_str
+                ORDER BY tiempo_str ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds", tipo_fruta),
             ).fetchall()
@@ -277,20 +276,26 @@ def serie_por_segundo(db_path=None, ventana_segundos=86400, tipo_fruta=None):
     if not filas:
         return []
 
-    # Adaptamos el rango de tiempo a los datos reales
-    datos_reales = {fila["timestamp_ms"]: fila for fila in filas}
-    min_ts = filas[0]["timestamp_ms"]
-    max_ts = filas[-1]["timestamp_ms"]
+    # Rellenar vacíos
+    from datetime import datetime, timedelta
+    datos_reales = {fila["tiempo_str"]: fila for fila in filas}
     
-    # Rellenar solo entre min_ts y max_ts
+    # Tomamos el primer y último registro real
+    inicio_str = filas[0]["tiempo_str"]
+    fin_str = filas[-1]["tiempo_str"]
+    
+    inicio_dt = datetime.fromisoformat(inicio_str)
+    fin_dt = datetime.fromisoformat(fin_str)
+    
     resultado = []
-    tiempo_actual = min_ts
-    while tiempo_actual <= max_ts:
+    actual_dt = inicio_dt
+    while actual_dt <= fin_dt:
+        tiempo_actual = actual_dt.isoformat(timespec='minutes')
         if tiempo_actual in datos_reales:
             fila = datos_reales[tiempo_actual]
-            resultado.append({"timestamp_ms": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
+            resultado.append({"tiempo_str": tiempo_actual, "S": fila["S"], "A": fila["A"], "R": fila["R"], "conteo": fila["S"]+fila["A"]+fila["R"]})
         else:
-            resultado.append({"timestamp_ms": tiempo_actual, "S": 0, "A": 0, "R": 0, "conteo": 0})
-        tiempo_actual += 60000 # Sumar 1 minuto
+            resultado.append({"tiempo_str": tiempo_actual, "S": 0, "A": 0, "R": 0, "conteo": 0})
+        actual_dt += timedelta(minutes=1)
         
     return resultado

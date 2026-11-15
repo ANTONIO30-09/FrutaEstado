@@ -111,8 +111,8 @@ function initChartSerie() {
         borderColor: "#4bb84b",
         backgroundColor: gradient, // Aplicamos el degradado
         fill: true, // Rellenar el área debajo de la línea
-        tension: 0.4, // Curvatura suave (estilo colina)
-        pointRadius: 2,
+        tension: 0.2, // Curvatura suave (estilo colina)
+        pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: "#fff",
         pointBorderColor: "#4bb84b",
@@ -168,14 +168,14 @@ function initChartSerie() {
 function actualizarSerie(serie) {
   if (!chartSerie) return;
   const mapa = new Map();
+  
   for (const item of serie) {
-    // db.py ahora envía timestamp_ms directamente
-    const tiempoMs = item.timestamp_ms;
-    if (!tiempoMs) continue;
-    
+    // Al pasar 'YYYY-MM-DDTHH:mm:00', JS lo interpreta como hora LOCAL automáticamente
+    const tiempoMs = new Date(item.tiempo_str).getTime();
     const prev = mapa.get(tiempoMs) || 0;
     mapa.set(tiempoMs, prev + item.conteo);
   }
+  
   const tiempos = Array.from(mapa.keys()).sort((a, b) => a - b);
   const datos = tiempos.map(t => ({ x: t, y: mapa.get(t) }));
   
