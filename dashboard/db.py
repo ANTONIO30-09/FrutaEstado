@@ -231,33 +231,40 @@ def obtener_ultimos_registros(
 
 
 def serie_por_segundo(db_path=None, ventana_segundos=60, tipo_fruta=None):
-    """Devuelve los registros agrupados por segundo y estado en la ventana dada."""
+    """Devuelve los registros agrupados por segundo y estado, con timestamp en ms."""
     from src.config import cargar_config
     if db_path is None:
         db_path = cargar_config().db_path
         
     conn = conectar(db_path)
     try:
+        # Agrupamos por el timestamp exacto en milisegundos
         if tipo_fruta is None:
             filas = conn.execute(
                 """
-                SELECT strftime('%H:%M:%S', timestamp) AS segundo, estado, COUNT(*) AS conteo
+                SELECT 
+                    CAST(strftime('%s', timestamp) AS INTEGER) * 1000 AS timestamp_ms,
+                    estado, 
+                    COUNT(*) AS conteo
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
-                GROUP BY segundo, estado
-                ORDER BY segundo ASC
+                GROUP BY timestamp_ms, estado
+                ORDER BY timestamp_ms ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds",),
             ).fetchall()
         else:
             filas = conn.execute(
                 """
-                SELECT strftime('%H:%M:%S', timestamp) AS segundo, estado, COUNT(*) AS conteo
+                SELECT 
+                    CAST(strftime('%s', timestamp) AS INTEGER) * 1000 AS timestamp_ms,
+                    estado, 
+                    COUNT(*) AS conteo
                 FROM registros
                 WHERE timestamp >= datetime('now', 'localtime', ?)
                   AND tipo_fruta = ?
-                GROUP BY segundo, estado
-                ORDER BY segundo ASC
+                GROUP BY timestamp_ms, estado
+                ORDER BY timestamp_ms ASC
                 """,
                 (f"-{int(ventana_segundos)} seconds", tipo_fruta),
             ).fetchall()
