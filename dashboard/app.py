@@ -25,13 +25,14 @@ from dashboard.estado_compartido import (
     get_perfil as get_perfil_activo,
     set_perfil as set_perfil_activo,
 )
-from dashboard.db import serie_por_segundo, (
-    ESTADOS_VALIDOS,
+from dashboard.db import (
     init_db,
     insertar_registro,
-    obtener_conteos_por_estado,
-    obtener_serie_por_minuto,
-    obtener_ultimos_registros,
+    obtener_conteos,
+    obtener_ultimos,
+    serie_por_minuto,
+    serie_por_segundo
+)
 )
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
@@ -115,7 +116,7 @@ def crear_app(db_path: str | None = None) -> Flask:
                 "conteos": obtener_conteos_por_estado(
                     db_path=db_path, tipo_fruta=tipo_fruta
                 ),
-                "serie_por_minuto": obtener_serie_por_minuto(
+                "serie_por_minuto": obtener_serie_por_segundo(
                     minutos=60, db_path=db_path, tipo_fruta=tipo_fruta
                 ),
                 "ultimos": obtener_ultimos_registros(
