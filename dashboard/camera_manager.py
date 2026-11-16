@@ -14,6 +14,7 @@ from src.perfiles_frutas import obtener_perfil
 from src.config import cargar_config
 from src.cliente_esp32 import enviar_estado
 from dashboard.db import insertar_registro
+from dashboard.estado_compartido import get_perfil
 
 log = logging.getLogger(__name__)
 
@@ -63,23 +64,39 @@ class CameraManager:
                 continue
 
             contador += 1
-            # YOLO se ejecuta cada 5 frames para no saturar
+            # YOLO se ejecuta cada 5 frames
             if contador % 5 == 0:
-                ultima_deteccion = self.detector.detectar_principal(frame)
+                det_nueva = self.detector.detectar_principal(frame)
+                # Si no detecta nada, limpiamos la memoria (falso positivo)
+                ultima_deteccion = det_nueva if det_nueva else None
 
             det = ultima_deteccion
+            perfil_forzado = get_perfil() # Leemos lo que el usuario eligió en el menú
 
+            # Determinamos la caja de la fruta
             if det:
                 x1, y1, x2, y2 = det.bbox
                 h, w = frame.shape[:2]
                 x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
                 roi = frame[y1:y2, x1:x2]
-                
-                if roi.size > 0:
+                bbox_para_dibujar = (x1, y1, x2, y2)
+            elif perfil_forzado != "default":
+                # Si no hay detección pero el usuario forzó una fruta, usamos el centro
+                h, w = frame.shape[:2]
+                x1, y1, x2, y2 = int(w*0.25), int(h*0.25), int(w*0.75), int(h*0.75)
+                roi = frame[y1:y2, x1:x2]
+                bbox_para_dibujar = (x1, y1, x2, y2)
+            else:
+                roi = None
+                bbox_para_dibujar = None
+
+            if roi is not None and roi.size > 0:
+                if perfil_forzado != "default":
+                    # EL USUARIO MANDÓ: Usamos el perfil del menú desplegable
+                    perfiles_candidatos = [perfil_forzado]
+                elif det:
+                    # YOLO MANDÓ: Adivinamos el color
                     clase_yolo = det.clase_yolo.lower()
-                    perfiles_candidatos = []
-                    
-                    # Lógica para resolver colores usando tus perfiles HSV
                     if "apple" in clase_yolo:
                         perfiles_candidatos = ["manzana_roja", "manzana_verde"]
                     elif "grape" in clase_yolo:
@@ -90,6 +107,8 @@ class CameraManager:
                         perfiles_candidatos = ["platano"]
                     else:
                         perfiles_candidatos = ["default"]
+                else:
+                    perfiles_candidatos = []
 
                     mejor_perfil = "desconocida"
                     mejor_res = None
@@ -122,10 +141,10 @@ class CameraManager:
                                 print(f"[DB] Error: {e}")
 
                     # Dibujamos
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.rectangle(frame, (bbox_para_dibujar[0], bbox_para_dibujar[1]), (bbox_para_dibujar[2], bbox_para_dibujar[3]), (0, 255, 0), 2)
                     estado_es = ESTADOS_ES.get(estado, "-")
                     texto = f"{mejor_perfil} | {estado_es}"
-                    cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    cv2.putText(frame, texto, (bbox_para_dibujar[0], bbox_para_dibujar[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
             ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             if ret:
