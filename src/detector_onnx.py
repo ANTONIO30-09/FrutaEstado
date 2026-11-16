@@ -30,7 +30,7 @@ class Deteccion:
     bbox: tuple[int, int, int, int]
 
 class DetectorONNX:
-    def __init__(self, modelo_path: str = "models/frutas.onnx", confianza_min: float = 0.40):
+    def __init__(self, modelo_path: str = "models/frutas.onnx", confianza_min: float = 0.25):
         self.modelo_path = str(Path(__file__).resolve().parent.parent / modelo_path)
         # Ejecutamos en CPU para ahorrar RAM
         self.session = ort.InferenceSession(self.modelo_path, providers=['CPUExecutionProvider'])
@@ -78,6 +78,7 @@ class DetectorONNX:
 
         if not bboxes:
             return None
+        # print(f'[YOLO] Objetos crudos detectados: {len(bboxes)}')
 
         # 4. Non-Maximum Suppression (Evitar cajas duplicadas)
         indices = cv2.dnn.NMSBoxes(bboxes, confidences, self.confianza_min, 0.45)
@@ -86,7 +87,7 @@ class DetectorONNX:
             return None
             
         # Tomamos la detección con mayor confianza
-        best_idx = indices[0]
+        best_idx = int(indices[0])
         box = bboxes[best_idx]
         conf = confidences[best_idx]
         c_id = class_ids[best_idx]

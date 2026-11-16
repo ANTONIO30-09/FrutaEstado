@@ -112,7 +112,7 @@ class CameraManager:
 
                     mejor_perfil = "desconocida"
                     mejor_res = None
-                    max_pixeles = -1
+                    max_score = -1
 
                     # Evaluamos qué color encaja mejor
                     for p_nombre in perfiles_candidatos:
@@ -120,8 +120,16 @@ class CameraManager:
                         perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
                         res_temp = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
                         
-                        if res_temp.pixeles_fruta > max_pixeles:
-                            max_pixeles = res_temp.pixeles_fruta
+                        # Desempate: Si el perfil es "verde", le sumamos el % de píxeles verdes
+                        # Si es "roja/morada", le sumamos el % de píxeles maduros/pasados.
+                        score = res_temp.pixeles_fruta
+                        if "verde" in p_nombre:
+                            score += res_temp.pct_verde
+                        elif "roja" in p_nombre or "morada" in p_nombre:
+                            score += (res_temp.pct_madura + res_temp.pct_pasada)
+
+                        if score > max_score:
+                            max_score = score
                             mejor_perfil = p_nombre
                             mejor_res = res_temp
 
@@ -130,6 +138,7 @@ class CameraManager:
                     
                     # Guardamos en DB y ESP32 (forzamos guardado si cambia la fruta o el estado)
                     if estado:
+                        print(f'[ANÁLISIS] Fruta: {mejor_perfil} | Estado: {estado} | Píxeles: {res.pixeles_fruta}')
                         if estado != estado_anterior or mejor_perfil != tipo_anterior:
                             try:
                                 insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
