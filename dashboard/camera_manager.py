@@ -163,7 +163,7 @@ class CameraManager:
             if config_path.exists():
                 try:
                     web_cfg = json.loads(config_path.read_text())
-                    cfg = replace(cfg, cam_url=web_cfg.get("cam_url", cfg.cam_url))
+                    cfg = replace(cfg, cam_url=web_cfg.get("cam_url", cfg.cam_url), esp32_ip=web_cfg.get("esp32_ip", cfg.esp32_ip))
                 except Exception:
                     pass
 
