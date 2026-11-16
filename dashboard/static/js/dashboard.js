@@ -173,6 +173,7 @@ function actualizarSerie(serie) {
     // db.py ahora envía el tiempo en item.tiempo_str (formato ISO con 'Z')
     if (!item.tiempo_str) continue;
     const tiempoMs = new Date(item.tiempo_str).getTime();
+    if (isNaN(tiempoMs)) continue;
     const prev = mapa.get(tiempoMs) || 0;
     mapa.set(tiempoMs, prev + item.conteo);
   }

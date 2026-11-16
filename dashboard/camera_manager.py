@@ -128,20 +128,33 @@ class CameraManager:
                         mejor_res = res_temp
 
                 if mejor_res:
-                    res = mejor_res
-                    estado = filtro.actualizar(res.estado)
-                    
-                    if estado:
-                        print(f'[ANÁLISIS] Fruta: {mejor_perfil} | Estado: {estado} | Píxeles: {res.pixeles_fruta}')
-                        if estado != estado_anterior or mejor_perfil != tipo_anterior:
-                            try:
-                                insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
-                                enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
-                                estado_anterior = estado
-                                tipo_anterior = mejor_perfil
-                                print(f"[DB] Guardado: {mejor_perfil} - {estado}")
-                            except Exception as e:
-                                print(f"[DB] Error: {e}")
+                    # VALIDACIÓN ESTRICTA: Si el usuario forzó una fruta, comprobamos que realmente tenga ese color.
+                    es_valido = True
+                    if perfil_forzado != "default":
+                        if "verde" in perfil_forzado and mejor_res.pct_verde < 30:
+                            es_valido = False
+                        elif ("roja" in perfil_forzado or "morada" in perfil_forzado) and (mejor_res.pct_madura + mejor_res.pct_pasada) < 30:
+                            es_valido = False
+
+                    if es_valido:
+                        res = mejor_res
+                        estado = filtro.actualizar(res.estado)
+                        
+                        if estado:
+                            print(f'[ANÁLISIS] Fruta: {mejor_perfil} | Estado: {estado} | Píxeles: {res.pixeles_fruta}')
+                            if estado != estado_anterior or mejor_perfil != tipo_anterior:
+                                try:
+                                    insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
+                                    enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
+                                    estado_anterior = estado
+                                    tipo_anterior = mejor_perfil
+                                    print(f"[DB] Guardado: {mejor_perfil} - {estado}")
+                                except Exception as e:
+                                    print(f"[DB] Error: {e}")
+                    else:
+                        # Si no cumple el color, no dibujamos nada
+                        bbox_para_dibujar = None
+                        estado = None
 
                     # Dibujamos
                     cv2.rectangle(frame, (bbox_para_dibujar[0], bbox_para_dibujar[1]), (bbox_para_dibujar[2], bbox_para_dibujar[3]), (0, 255, 0), 2)
