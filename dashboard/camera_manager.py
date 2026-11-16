@@ -5,6 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 import json
 import logging
+import numpy as np
 
 from src.captura import CapturaVideo
 from src.detector_onnx import DetectorONNX
@@ -12,22 +13,11 @@ from src.clasificador import clasificar_bbox, FiltroMayoria
 from src.perfiles_frutas import obtener_perfil
 from src.config import cargar_config
 from src.cliente_esp32 import enviar_estado
-# Importamos la función de la DB directamente para evitar peticiones HTTP a nosotros mismos
 from dashboard.db import insertar_registro
-
 
 log = logging.getLogger(__name__)
 
-MAPEO_FRUTAS = {
-    "banana": "Plátano",
-    "apple": "Manzana",
-    "orange": "Mandarina",
-    "grape": "Uva",
-    "default": "Fruta"
-}
-
 ESTADOS_ES = {"S": "Madura", "A": "Inmadura", "R": "Pasada"}
-
 
 class CameraManager:
     def __init__(self):
@@ -38,46 +28,46 @@ class CameraManager:
         self._lock = threading.Lock()
 
     def generar_frames(self):
-        print("[CÁMARA] Iniciando hilo de captura...")
+        print("[CÁMARA] Iniciando hilo...")
         cfg = cargar_config()
         
         config_path = Path(__file__).resolve().parent.parent / "config" / "dispositivos.json"
         if config_path.exists():
             try:
                 web_cfg = json.loads(config_path.read_text())
-                cfg = replace(cfg, cam_url=web_cfg.get("cam_url", cfg.cam_url), esp32_ip=web_cfg.get("esp32_ip", cfg.esp32_ip))
-                print(f"[CÁMARA] Conectando a: {cfg.cam_url}")
-            except Exception as e:
-                print(f"[CÁMARA] Error leyendo config: {e}")
+                cfg = replace(cfg, cam_url=web_cfg.get("cam_url", cfg.cam_url))
+            except Exception:
+                pass
 
         try:
             cap = CapturaVideo(cfg.cam_url)
             cap.abrir()
-            print("[CÁMARA] ¡Conexión exitosa a la cámara!")
+            print(f"[CÁMARA] Conectada a: {cfg.cam_url}")
         except Exception as e:
-            print(f"[CÁMARA] Error abriendo camara: {e}")
+            print(f"[CÁMARA] Error: {e}")
             self.running = False
             return
 
         self.detector = DetectorONNX()
         filtro = FiltroMayoria(7)
         estado_anterior = None
+        tipo_anterior = None
         contador = 0
         ultima_deteccion = None
 
         while self.running:
+            # Leer el frame
             frame = cap.leer_frame()
             if frame is None:
                 time.sleep(0.1)
                 continue
 
             contador += 1
-            # YOLO cada 3 frames
-            if contador % 3 == 0:
-                det = self.detector.detectar_principal(frame)
-                ultima_deteccion = det
-            else:
-                det = ultima_deteccion
+            # YOLO se ejecuta cada 5 frames para no saturar
+            if contador % 5 == 0:
+                ultima_deteccion = self.detector.detectar_principal(frame)
+
+            det = ultima_deteccion
 
             if det:
                 x1, y1, x2, y2 = det.bbox
@@ -86,25 +76,26 @@ class CameraManager:
                 roi = frame[y1:y2, x1:x2]
                 
                 if roi.size > 0:
-                    # Resolvemos los subtipos usando HSV
-                    perfiles_candidatos = []
                     clase_yolo = det.clase_yolo.lower()
+                    perfiles_candidatos = []
                     
-                    if clase_yolo == "apple":
+                    # Lógica para resolver colores usando tus perfiles HSV
+                    if "apple" in clase_yolo:
                         perfiles_candidatos = ["manzana_roja", "manzana_verde"]
-                    elif clase_yolo == "orange":
+                    elif "grape" in clase_yolo:
+                        perfiles_candidatos = ["uva_morada", "uva_verde"]
+                    elif "orange" in clase_yolo:
                         perfiles_candidatos = ["mandarina"]
-                    elif clase_yolo == "banana":
+                    elif "banana" in clase_yolo:
                         perfiles_candidatos = ["platano"]
                     else:
-                        # Si no es una fruta conocida, usamos default
                         perfiles_candidatos = ["default"]
 
                     mejor_perfil = "desconocida"
                     mejor_res = None
                     max_pixeles = -1
 
-                    # Probamos los colores para ver cuál encaja mejor
+                    # Evaluamos qué color encaja mejor
                     for p_nombre in perfiles_candidatos:
                         perfil_t = obtener_perfil(p_nombre)
                         perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
@@ -118,28 +109,31 @@ class CameraManager:
                     res = mejor_res
                     estado = filtro.actualizar(res.estado)
                     
-                    if estado and estado != estado_anterior:
-                        # Guardamos el nombre del perfil (ej. "manzana_roja") en la DB para que el filtro funcione
-                        try:
-                            insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
-                            enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
-                            estado_anterior = estado
-                        except Exception as e:
-                            print(f"[DB] Error: {e}")
+                    # Guardamos en DB y ESP32 (forzamos guardado si cambia la fruta o el estado)
+                    if estado:
+                        if estado != estado_anterior or mejor_perfil != tipo_anterior:
+                            try:
+                                insertar_registro(estado=estado, pct_verde=res.pct_verde, pct_madura=res.pct_madura, pct_pasada=res.pct_pasada, tipo_fruta=mejor_perfil, db_path=cfg.db_path)
+                                enviar_estado(cfg.esp32_ip, cfg.esp32_port, cfg.esp32_endpoint, estado)
+                                estado_anterior = estado
+                                tipo_anterior = mejor_perfil
+                                print(f"[DB] Guardado: {mejor_perfil} - {estado}")
+                            except Exception as e:
+                                print(f"[DB] Error: {e}")
 
-                    # Dibujamos en el video el nombre del perfil (ej. "manzana_verde")
+                    # Dibujamos
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     estado_es = ESTADOS_ES.get(estado, "-")
                     texto = f"{mejor_perfil} | {estado_es}"
                     cv2.putText(frame, texto, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             if ret:
                 with self._lock:
                     self.frame_actual = buffer.tobytes()
 
-            # FRENO DE MANO: Dormimos el hilo para no saturar el procesador
-            time.sleep(0.05) 
+            # Un mini descanso para no saturar la CPU
+            time.sleep(0.03) 
 
         cap.cerrar()
         print("[CÁMARA] Hilo detenido.")
