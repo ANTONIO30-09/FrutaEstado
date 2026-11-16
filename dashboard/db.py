@@ -237,7 +237,7 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
     conn = conectar(db_path)
     try:
         # 1. Buscamos el registro más antiguo (dentro de la ventana) y el más reciente
-        query_rango = "SELECT MIN(timestamp), MAX(timestamp) FROM registros WHERE timestamp >= datetime('now', ?)"
+        query_rango = "SELECT MIN(timestamp), MAX(timestamp) FROM registros WHERE timestamp >= datetime('now', 'localtime', ?)"
         params_rango = [f"-{int(ventana_segundos)} seconds"]
         if tipo_fruta:
             query_rango += " AND tipo_fruta = ?"
@@ -256,19 +256,19 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
         
         if diff_minutos <= 15:
             agrupar_por = "segundos"
-            sql_group = "strftime('%Y-%m-%dT%H:%M:%SZ', timestamp)"
+            sql_group = "strftime('%Y-%m-%dT%H:%M:%S', timestamp)"
             delta = timedelta(seconds=1)
-            formato = '%Y-%m-%dT%H:%M:%SZ'
+            formato = '%Y-%m-%dT%H:%M:%S'
         elif diff_minutos <= 180: # Hasta 3 horas
             agrupar_por = "minutos"
-            sql_group = "strftime('%Y-%m-%dT%H:%M:00Z', timestamp)"
+            sql_group = "strftime('%Y-%m-%dT%H:%M:00', timestamp)"
             delta = timedelta(minutes=1)
-            formato = '%Y-%m-%dT%H:%M:00Z'
+            formato = '%Y-%m-%dT%H:%M:00'
         else:
             agrupar_por = "horas"
-            sql_group = "strftime('%Y-%m-%dT%H:00:00Z', timestamp)"
+            sql_group = "strftime('%Y-%m-%dT%H:00:00', timestamp)"
             delta = timedelta(hours=1)
-            formato = '%Y-%m-%dT%H:00:00Z'
+            formato = '%Y-%m-%dT%H:00:00'
 
         print(f"[GRÁFICA] Agrupando por {agrupar_por} (rango de {diff_minutos:.1f} min)")
 
@@ -280,7 +280,7 @@ def serie_por_segundo(db_path=None, ventana_segundos=14400, tipo_fruta=None):
                 SUM(CASE WHEN estado='A' THEN 1 ELSE 0 END) AS A,
                 SUM(CASE WHEN estado='R' THEN 1 ELSE 0 END) AS R
             FROM registros
-            WHERE timestamp >= datetime('now', ?)
+            WHERE timestamp >= datetime('now', 'localtime', ?)
         """
         params_datos = [f"-{int(ventana_segundos)} seconds"]
         if tipo_fruta:
