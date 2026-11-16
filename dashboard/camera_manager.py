@@ -128,12 +128,17 @@ class CameraManager:
                         mejor_res = res_temp
 
                 if mejor_res:
-                    # VALIDACIÓN ESTRICTA: Si el usuario forzó una fruta, comprobamos que realmente tenga ese color.
+                    # VALIDACIÓN ESTRICTA UNIVERSAL (Para todas las frutas)
                     es_valido = True
                     if perfil_forzado != "default":
-                        if "verde" in perfil_forzado and mejor_res.pct_verde < 30:
+                        # Frutas verdes
+                        if "verde" in perfil_forzado and mejor_res.pct_verde < 35:
                             es_valido = False
-                        elif ("roja" in perfil_forzado or "morada" in perfil_forzado) and (mejor_res.pct_madura + mejor_res.pct_pasada) < 30:
+                        # Frutas rojas, moradas o naranjas (mandarina)
+                        elif ("roja" in perfil_forzado or "morada" in perfil_forzado or "mandarina" in perfil_forzado) and (mejor_res.pct_madura + mejor_res.pct_pasada) < 35:
+                            es_valido = False
+                        # Plátano (puede ser verde o amarillo)
+                        elif "platano" in perfil_forzado and (mejor_res.pct_madura + mejor_res.pct_verde) < 35:
                             es_valido = False
 
                     if es_valido:
