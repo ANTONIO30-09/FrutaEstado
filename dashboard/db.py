@@ -159,10 +159,7 @@ def obtener_serie_por_minuto(
     db_path: str | Path | None = None,
     tipo_fruta: str | None = None,
 ) -> list[dict]:
-    """Serie por minuto en la ventana indicada (por defecto, última hora).
-
-    Si tipo_fruta no es None, filtra por esa fruta.
-    """
+    """Serie por minuto en la ventana indicada (por defecto, última hora)."""
     conn = conectar(db_path)
     try:
         if tipo_fruta is None:
@@ -173,7 +170,7 @@ def obtener_serie_por_minuto(
                     estado,
                     COUNT(*) AS conteo
                 FROM registros
-                WHERE timestamp >= datetime('now', ?)
+                WHERE timestamp >= datetime('now', 'localtime', ?)
                 GROUP BY minuto, estado
                 ORDER BY minuto ASC
                 """,
@@ -187,7 +184,7 @@ def obtener_serie_por_minuto(
                     estado,
                     COUNT(*) AS conteo
                 FROM registros
-                WHERE timestamp >= datetime('now', ?)
+                WHERE timestamp >= datetime('now', 'localtime', ?)
                   AND tipo_fruta = ?
                 GROUP BY minuto, estado
                 ORDER BY minuto ASC
@@ -197,7 +194,6 @@ def obtener_serie_por_minuto(
     finally:
         conn.close()
     return [dict(fila) for fila in filas]
-
 
 def obtener_ultimos_registros(
     n: int = 10,
