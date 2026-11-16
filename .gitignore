@@ -66,3 +66,5 @@ firmware/**/build/
 *.pt
 
 config/dispositivos.json
+config/firebase_key.json
+models/*.onnx

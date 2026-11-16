@@ -7,7 +7,7 @@ import json
 import logging
 
 from src.captura import CapturaVideo
-from src.detector_yolo import DetectorYOLO
+from src.detector_onnx import DetectorONNX
 from src.clasificador import clasificar_bbox, FiltroMayoria
 from src.perfiles_frutas import obtener_perfil
 from src.config import cargar_config
@@ -59,7 +59,7 @@ class CameraManager:
             self.running = False
             return
 
-        self.detector = DetectorYOLO()
+        self.detector = DetectorONNX()
         filtro = FiltroMayoria(7)
         estado_anterior = None
         contador = 0
