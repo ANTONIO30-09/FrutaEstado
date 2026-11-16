@@ -170,7 +170,8 @@ function actualizarSerie(serie) {
   const mapa = new Map();
   
   for (const item of serie) {
-    // Al pasar 'YYYY-MM-DDTHH:mm:00', JS lo interpreta como hora LOCAL automáticamente
+    // db.py ahora envía el tiempo en item.tiempo_str (formato ISO con 'Z')
+    if (!item.tiempo_str) continue;
     const tiempoMs = new Date(item.tiempo_str).getTime();
     const prev = mapa.get(tiempoMs) || 0;
     mapa.set(tiempoMs, prev + item.conteo);

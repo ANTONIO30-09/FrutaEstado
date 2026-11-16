@@ -114,11 +114,13 @@ class CameraManager:
                     perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
                     res_temp = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
                     
-                    score = res_temp.pixeles_fruta
+                    # Damos prioridad al porcentaje de color sobre la cantidad de píxeles
                     if "verde" in p_nombre:
-                        score += res_temp.pct_verde
+                        score = res_temp.pct_verde
                     elif "roja" in p_nombre or "morada" in p_nombre:
-                        score += (res_temp.pct_madura + res_temp.pct_pasada)
+                        score = (res_temp.pct_madura + res_temp.pct_pasada)
+                    else:
+                        score = res_temp.pixeles_fruta
 
                     if score > max_score:
                         max_score = score
