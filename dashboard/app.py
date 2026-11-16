@@ -131,7 +131,7 @@ def crear_app(db_path: str | None = None) -> Flask:
         if os.environ.get("PYTEST_CURRENT_TEST"):
             serie = obtener_serie_por_minuto(60, db_path_efectivo, tipo_fruta)
         else:
-            serie = serie_por_segundo(db_path_efectivo, 14400, tipo_fruta)
+            serie = serie_por_segundo(db_path_efectivo, 18000, tipo_fruta)
             
         return jsonify({
             "conteos": conteos,
