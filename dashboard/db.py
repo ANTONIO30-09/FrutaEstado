@@ -49,7 +49,7 @@ def conectar(db_path: str | Path | None = None) -> sqlite3.Connection:
     ruta = _resolver_db_path(db_path)
     if ruta != ":memory:":
         Path(ruta).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(ruta)
+    conn = sqlite3.connect(ruta, timeout=15)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn

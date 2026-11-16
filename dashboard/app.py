@@ -167,16 +167,13 @@ def crear_app(db_path: str | None = None) -> Flask:
     @app.route("/video_feed")
     def video_feed():
         def generate():
-            while True:
-                if camera_manager.running:
-                    frame = camera_manager.get_frame()
-                    if frame:
-                        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                    else:
-                        time.sleep(0.1)
+            # El bucle se detiene cuando la cámara se apaga
+            while camera_manager.running:
+                frame = camera_manager.get_frame()
+                if frame:
+                    yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 else:
-                    time.sleep(0.5)
-                    continue
+                    time.sleep(0.1)
         return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     @app.route("/api/camera/start", methods=["POST"])
