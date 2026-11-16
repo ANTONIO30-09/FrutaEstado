@@ -10,8 +10,7 @@ from pathlib import Path
 # Mapeo de las 10 clases del modelo a los nombres de tus perfiles
 # NOTA: Ajustaremos esto cuando verifiquemos los nombres exactos.
 CLASES_MODELO = [
-    "apple", "banana", "grape", "orange", "pineapple", 
-    "watermelon", "pear", "peach", "strawberry", "mango"
+    "apple", "banana", "grape", "orange", "pineapple", "watermelon"
 ]
 
 MAPEO_YOLO_A_PERFIL = {

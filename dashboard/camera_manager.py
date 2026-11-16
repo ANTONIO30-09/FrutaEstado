@@ -5,7 +5,6 @@ from dataclasses import replace
 from pathlib import Path
 import json
 import logging
-import numpy as np
 
 from src.captura import CapturaVideo
 from src.detector_onnx import DetectorONNX
@@ -17,7 +16,6 @@ from dashboard.db import insertar_registro
 from dashboard.estado_compartido import get_perfil
 
 log = logging.getLogger(__name__)
-
 ESTADOS_ES = {"S": "Madura", "A": "Inmadura", "R": "Pasada"}
 
 class CameraManager:
@@ -57,86 +55,80 @@ class CameraManager:
         ultima_deteccion = None
 
         while self.running:
-            # Leer el frame
             frame = cap.leer_frame()
             if frame is None:
                 time.sleep(0.1)
                 continue
 
             contador += 1
-            # YOLO se ejecuta cada 5 frames
             if contador % 5 == 0:
                 det_nueva = self.detector.detectar_principal(frame)
-                # Si no detecta nada, limpiamos la memoria (falso positivo)
                 ultima_deteccion = det_nueva if det_nueva else None
 
             det = ultima_deteccion
-            perfil_forzado = get_perfil() # Leemos lo que el usuario eligió en el menú
+            perfil_forzado = get_perfil()
 
-            # Determinamos la caja de la fruta
-            if det:
+            bbox_para_dibujar = None
+            roi = None
+            perfiles_candidatos = []
+
+            # --- Lógica de selección de perfil ---
+            if perfil_forzado != "default":
+                # El usuario forzó una fruta en el menú
+                h, w = frame.shape[:2]
+                x1, y1, x2, y2 = int(w*0.25), int(h*0.25), int(w*0.75), int(h*0.75)
+                roi = frame[y1:y2, x1:x2]
+                bbox_para_dibujar = (x1, y1, x2, y2)
+                perfiles_candidatos = [perfil_forzado]
+                print(f"[DEBUG] Modo Forzado: {perfil_forzado}") if contador % 30 == 0 else None
+
+            elif det:
+                # YOLO detectó algo
                 x1, y1, x2, y2 = det.bbox
                 h, w = frame.shape[:2]
                 x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
                 roi = frame[y1:y2, x1:x2]
                 bbox_para_dibujar = (x1, y1, x2, y2)
-            elif perfil_forzado != "default":
-                # Si no hay detección pero el usuario forzó una fruta, usamos el centro
-                h, w = frame.shape[:2]
-                x1, y1, x2, y2 = int(w*0.25), int(h*0.25), int(w*0.75), int(h*0.75)
-                roi = frame[y1:y2, x1:x2]
-                bbox_para_dibujar = (x1, y1, x2, y2)
-            else:
-                roi = None
-                bbox_para_dibujar = None
 
-            if roi is not None and roi.size > 0:
-                if perfil_forzado != "default":
-                    # EL USUARIO MANDÓ: Usamos el perfil del menú desplegable
-                    perfiles_candidatos = [perfil_forzado]
-                elif det:
-                    # YOLO MANDÓ: Adivinamos el color
-                    clase_yolo = det.clase_yolo.lower()
-                    if "apple" in clase_yolo:
-                        perfiles_candidatos = ["manzana_roja", "manzana_verde"]
-                    elif "grape" in clase_yolo:
-                        perfiles_candidatos = ["uva_morada", "uva_verde"]
-                    elif "orange" in clase_yolo:
-                        perfiles_candidatos = ["mandarina"]
-                    elif "banana" in clase_yolo:
-                        perfiles_candidatos = ["platano"]
-                    else:
-                        perfiles_candidatos = ["default"]
+                clase_yolo = det.clase_yolo.lower()
+                if "apple" in clase_yolo:
+                    perfiles_candidatos = ["manzana_roja", "manzana_verde"]
+                elif "grape" in clase_yolo:
+                    perfiles_candidatos = ["uva_morada", "uva_verde"]
+                elif "orange" in clase_yolo:
+                    perfiles_candidatos = ["mandarina"]
+                elif "banana" in clase_yolo:
+                    perfiles_candidatos = ["platano"]
                 else:
-                    perfiles_candidatos = []
+                    perfiles_candidatos = ["default"]
+                print(f"[DEBUG] YOLO detectó: {clase_yolo} ({det.confianza:.2f})") if contador % 30 == 0 else None
 
-                    mejor_perfil = "desconocida"
-                    mejor_res = None
-                    max_score = -1
+            # --- Evaluación y guardado (AQUÍ ESTABA EL ERROR DE INDENTACIÓN) ---
+            if roi is not None and roi.size > 0 and perfiles_candidatos:
+                mejor_perfil = "desconocida"
+                mejor_res = None
+                max_score = -1
 
-                    # Evaluamos qué color encaja mejor
-                    for p_nombre in perfiles_candidatos:
-                        perfil_t = obtener_perfil(p_nombre)
-                        perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
-                        res_temp = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
-                        
-                        # Desempate: Si el perfil es "verde", le sumamos el % de píxeles verdes
-                        # Si es "roja/morada", le sumamos el % de píxeles maduros/pasados.
-                        score = res_temp.pixeles_fruta
-                        if "verde" in p_nombre:
-                            score += res_temp.pct_verde
-                        elif "roja" in p_nombre or "morada" in p_nombre:
-                            score += (res_temp.pct_madura + res_temp.pct_pasada)
+                for p_nombre in perfiles_candidatos:
+                    perfil_t = obtener_perfil(p_nombre)
+                    perfil_bbox = replace(perfil_t, roi_x_rel=0.0, roi_y_rel=0.0, roi_w_rel=1.0, roi_h_rel=1.0)
+                    res_temp = clasificar_bbox(roi, (0,0,roi.shape[1],roi.shape[0]), perfil_bbox)
+                    
+                    score = res_temp.pixeles_fruta
+                    if "verde" in p_nombre:
+                        score += res_temp.pct_verde
+                    elif "roja" in p_nombre or "morada" in p_nombre:
+                        score += (res_temp.pct_madura + res_temp.pct_pasada)
 
-                        if score > max_score:
-                            max_score = score
-                            mejor_perfil = p_nombre
-                            mejor_res = res_temp
+                    if score > max_score:
+                        max_score = score
+                        mejor_perfil = p_nombre
+                        mejor_res = res_temp
 
+                if mejor_res:
                     res = mejor_res
                     estado = filtro.actualizar(res.estado)
                     
-                    # Guardamos en DB y ESP32 (forzamos guardado si cambia la fruta o el estado)
                     if estado:
                         print(f'[ANÁLISIS] Fruta: {mejor_perfil} | Estado: {estado} | Píxeles: {res.pixeles_fruta}')
                         if estado != estado_anterior or mejor_perfil != tipo_anterior:
@@ -160,7 +152,6 @@ class CameraManager:
                 with self._lock:
                     self.frame_actual = buffer.tobytes()
 
-            # Un mini descanso para no saturar la CPU
             time.sleep(0.03) 
 
         cap.cerrar()
