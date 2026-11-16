@@ -170,7 +170,7 @@ def obtener_serie_por_minuto(
                     estado,
                     COUNT(*) AS conteo
                 FROM registros
-                WHERE timestamp >= datetime('now', 'localtime', ?)
+                WHERE timestamp >= datetime('now', ?)
                 GROUP BY minuto, estado
                 ORDER BY minuto ASC
                 """,
@@ -184,7 +184,7 @@ def obtener_serie_por_minuto(
                     estado,
                     COUNT(*) AS conteo
                 FROM registros
-                WHERE timestamp >= datetime('now', 'localtime', ?)
+                WHERE timestamp >= datetime('now', ?)
                   AND tipo_fruta = ?
                 GROUP BY minuto, estado
                 ORDER BY minuto ASC
