@@ -19,8 +19,16 @@ from src.perfiles_frutas import listar_nombres
 camera_manager = CameraManager()
 
 try:
+    # Ruta local (para tu laptop)
     firebase_key_path = Path(__file__).resolve().parent.parent / "config" / "firebase_key.json"
-    if firebase_key_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
+    # Ruta en Render (Docker monta los secret files aquí)
+    render_firebase_path = Path("/etc/secrets/firebase_key.json")
+    
+    if render_firebase_path.exists():
+        cred = credentials.Certificate(str(render_firebase_path))
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+    elif firebase_key_path.exists() and not os.environ.get("PYTEST_CURRENT_TEST"):
         cred = credentials.Certificate(str(firebase_key_path))
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred)
