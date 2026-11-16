@@ -248,9 +248,9 @@ async function onSelectorChange(ev) {
   aplicarFruta(valor);
   // Envia el perfil al backend (incluye "default" y "" para Ver todos)
   if (valor) {
-    await setPerfilEnBackend(valor);
+    setPerfilEnBackend(valor); // Sin await, para no congelar la interfaz
   }
-  await tick();
+  // No bloqueamos el hilo esperando la gráfica, el setInterval ya la actualizará
 }
 
 // ---------- Toggle panel flotante ----------

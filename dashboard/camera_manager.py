@@ -150,7 +150,7 @@ class CameraManager:
                 with self._lock:
                     self.frame_actual = buffer.tobytes()
 
-            time.sleep(0.03)
+            time.sleep(0.05)
 
         cap.cerrar()
         print("[CÁMARA] Hilo detenido.")

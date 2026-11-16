@@ -31,8 +31,10 @@ class Deteccion:
 class DetectorONNX:
     def __init__(self, modelo_path: str = "models/frutas.onnx", confianza_min: float = 0.25):
         self.modelo_path = str(Path(__file__).resolve().parent.parent / modelo_path)
-        # Ejecutamos en CPU para ahorrar RAM
-        self.session = ort.InferenceSession(self.modelo_path, providers=['CPUExecutionProvider'])
+        # Forzamos a usar 1 solo hilo de CPU para no congelar Flask
+        opts = ort.SessionOptions()
+        opts.intra_op_num_threads = 1
+        self.session = ort.InferenceSession(self.modelo_path, sess_options=opts, providers=['CPUExecutionProvider'])
         self.input_name = self.session.get_inputs()[0].name
         self.confianza_min = confianza_min
 
